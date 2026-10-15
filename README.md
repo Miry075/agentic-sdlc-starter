@@ -153,7 +153,7 @@ I help teams on the Microsoft stack (.NET, Azure, Entra ID, Azure DevOps) make A
 
 **AI-Readiness Assessment:** a 3-day audit of your repos, wiki and process, with a readiness score, a risk list and an 8-week rollout plan.
 
-→ [Book a 20-minute call](https://calendly.com/YOUR-LINK) · [LinkedIn](https://www.linkedin.com/in/YOUR-PROFILE)
+→ [Book a 20-minute call](https://www.mirindra-harivao.com/ai-readiness) · [LinkedIn](https://www.linkedin.com/in/mirindra-harivao-237160135/)
 
 ## License
 
