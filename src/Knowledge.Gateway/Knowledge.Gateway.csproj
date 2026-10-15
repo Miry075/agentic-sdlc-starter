@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <ItemGroup>
+    <ProjectReference Include="..\Knowledge.Core\Knowledge.Core.csproj" />
+    <ProjectReference Include="..\Knowledge.Policy\Knowledge.Policy.csproj" />
+    <ProjectReference Include="..\Knowledge.Redaction\Knowledge.Redaction.csproj" />
+    <ProjectReference Include="..\Knowledge.Application\Knowledge.Application.csproj" />
+    <ProjectReference Include="..\Knowledge.Adapters\Knowledge.Adapters.csproj" />
+    <ProjectReference Include="..\Knowledge.Upstreams\Knowledge.Upstreams.csproj" />
+  </ItemGroup>
+  <!-- Floating versions until the first successful restore. Pin them (exact versions) once the build is green. -->
+  <ItemGroup>
+    <PackageReference Include="ModelContextProtocol.AspNetCore" Version="$(ModelContextProtocolVersion)" />
+    <PackageReference Include="Microsoft.Identity.Web" Version="3.*" />
+    <PackageReference Include="Azure.Identity" Version="1.*" />
+    <PackageReference Include="Azure.Monitor.OpenTelemetry.AspNetCore" Version="1.*" />
+  </ItemGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="Knowledge.Gateway.IntegrationTests" />
+  </ItemGroup>
+</Project>

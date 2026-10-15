@@ -11,6 +11,35 @@ The Knowledge Gateway is a single MCP server that sits between AI coding agents 
 
 ---
 
+## As built (v0.1 implementation notes)
+
+The code in `src/` follows this design, with the changes below. Where this section and a later section disagree, this section is current.
+
+| # | Change | Why |
+|---|---|---|
+| 1 | New project `Knowledge.Application` holds `ToolGuard`, `ToolDispatcher`, the L1 and L4 tools and the markdown parsing (glossary, ADRs, work-item formatting). | Keeps the layering one-directional (Core ← Application ← Adapters/Host) and lets `ToolGuard` be tested without ASP.NET Core. |
+| 2 | `IToolGuard.RunAsync` returns `ToolResult(IsError, Text)`, not `string`. New contracts in Core: `IGatewayTool`, `IToolSource`, `ToolDescriptor`, `IWorkItemSource`, `IRepoContextSource`, `IDownstreamTokenProvider`, `IServiceTokenProvider`, `IToolPinStatus`. | A denial is a normal outcome, not an exception. |
+| 3 | `Knowledge.Adapters` does **not** reference `Microsoft.Identity.Web`. It depends on `IDownstreamTokenProvider`; the host implements it with `ITokenAcquisition`. | Dependency inversion: adapters stay plain libraries. |
+| 4 | A tool flagged `needsWorkItemState` is **denied** when the work-item state cannot be determined (unknown item, no access, tracker down). The design said the check is skipped when the state is null. | Fail closed. |
+| 5 | Upstream **resources** are exposed through a gateway-defined tool `<upstream>.read_resource` (argument `uri`). It exists when the policy sets `resources.allow`, is available only in `resources.phases`, and only for URIs matching `allow`. It goes through `ToolGuard` like every other tool. | One enforcement path for tools and resources. |
+| 6 | Upstream auth mode `Obo` is **refused at startup** in v0.1. `None`, `KeyVaultSecret` and `ManagedIdentity` work. | The MCP client holds one long-lived connection with one identity. A per-user token needs a connection per user. Planned for v0.2. |
+| 7 | The MCP endpoint is **stateless** Streamable HTTP. | Each request is authenticated on its own, which on-behalf-of exchange needs. The gateway never pushes to clients. |
+| 8 | `Knowledge.Adapters` ships `AzureReposSource` only (no GitHub REST). Its cache is keyed by path with a 60 s lifetime, not by commit SHA. | Smaller first version. GitHub is a follow-up. |
+| 9 | Upstream tools are re-discovered every 10 minutes. `notifications/tools/list_changed` is not handled yet. | Same reason; the pin check still runs on every discovery. |
+| 10 | Upstream secrets are read from configuration key `UpstreamSecrets:<name>`. In Azure, add the Key Vault configuration provider. | The gateway has no Key Vault code of its own. |
+| 11 | The shared `policy/phase-access.yaml` was fixed: descriptions containing commas did not parse as YAML flow mappings, and `get_spec` / `get_work_item` now declare `needsWorkItemState`. | Found while writing the loader tests. |
+
+### Verification status
+
+| Level | Status |
+|---|---|
+| Compiled with the .NET 10 SDK | All `src/` projects, all `tests/` projects |
+| Unit and component tests run | 234 tests pass (policy 77, redaction 30, application 47, adapters 20, upstreams 42, host wiring 18) |
+| Run against the real packages | **Not yet.** NuGet was unreachable where this was written. xunit, YamlDotNet, `ModelContextProtocol`, Microsoft.Identity.Web and Azure.Identity were replaced by stand-ins for the run. |
+| Files that talk to those packages | `Upstreams/Sdk/*`, `Gateway/Mcp/McpEndpoint.cs`, `Gateway/Auth/TokenProviders.cs`, the Entra branch of `Composition.cs`, `Program.cs`. They compile against stubs of the APIs as understood; the first real restore decides. |
+
+---
+
 ## 1. Goals and non-goals
 
 ### Goals

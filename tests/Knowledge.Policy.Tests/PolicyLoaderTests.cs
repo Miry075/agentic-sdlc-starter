@@ -138,4 +138,52 @@ public class PolicyLoaderTests
     {
         Assert.Contains("The file is empty.", Load("").Errors);
     }
+
+    private static string WithResources(string resourcesBlock) => StandardYaml(ValidPin) + "\n    resources:\n" + resourcesBlock;
+
+    [Fact]
+    public void Parse_WhenUpstreamAllowsResources_DefinesAReadResourceToolInTheListedPhasesOnly()
+    {
+        var policy = PolicyLoader.Parse(WithResources("      allow: [\"graphify://node/*\"]\n      phases: [design]"));
+
+        var tool = policy.Tools["graphify.read_resource"];
+        Assert.True(tool.Synthetic);
+        Assert.Contains("graphify.read_resource", policy.Phases["design"]);
+        Assert.DoesNotContain("graphify.read_resource", policy.Phases["build"]);
+    }
+
+    [Fact]
+    public void Parse_WhenUpstreamHasNoResourceAllowList_DefinesNoReadResourceTool()
+    {
+        var policy = PolicyLoader.Parse(StandardYaml(ValidPin));
+
+        Assert.False(policy.Tools.ContainsKey("graphify.read_resource"));
+    }
+
+    [Fact]
+    public void Parse_WhenResourcePhasesHaveNoAllowList_Throws()
+    {
+        var yaml = WithResources("      phases: [design]");
+
+        Assert.Contains(Load(yaml).Errors, e => e.Contains("'resources.phases' needs at least one entry"));
+    }
+
+    [Fact]
+    public void Parse_WhenResourcePhaseIsUnknown_Throws()
+    {
+        var yaml = WithResources("      allow: [\"graphify://node/*\"]\n      phases: [deploy]");
+
+        Assert.Contains("Upstream 'graphify' lists unknown resource phase 'deploy'.", Load(yaml).Errors);
+    }
+
+    [Fact]
+    public void Evaluate_ForReadResource_FollowsTheResourcePhases()
+    {
+        var policy = new PhasePolicy(
+            PolicyLoader.Parse(WithResources("      allow: [\"graphify://node/*\"]\n      phases: [design]")),
+            new FakePinStatus(true));
+
+        Assert.True(policy.Evaluate(Request(Caller("developers"), "graphify.read_resource", "design")).Allowed);
+        Assert.False(policy.Evaluate(Request(Caller("developers"), "graphify.read_resource", "build")).Allowed);
+    }
 }
