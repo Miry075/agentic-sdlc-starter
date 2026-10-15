@@ -32,3 +32,9 @@ public interface IDownstreamTokenProvider
 {
     Task<string> GetTokenAsync(CallerContext caller, string scope, CancellationToken cancellationToken);
 }
+
+/// <summary>Obtains a token for a downstream API using the gateway's own identity (managed identity), not a user's.</summary>
+public interface IServiceTokenProvider
+{
+    Task<string> GetTokenAsync(string scope, CancellationToken cancellationToken);
+}
