@@ -1,0 +1,49 @@
+# Phase-to-tool access policy for the knowledge gateway.
+# Versioned in Git, owned by architects and security (CODEOWNERS).
+#
+# Effective access = role ceiling ∩ phases allowed by work-item state ∩ declared phase.
+# The phase declared by an agent can only narrow access, never widen it.
+
+defaultDecision: deny
+
+tools:
+  get_glossary_term:   { layer: L1, description: Domain term definition }
+  search_adrs:         { layer: L1, description: Architecture decision records }
+  get_spec:            { layer: L1, description: Committed spec for a work item }
+  search_code_graph:   { layer: L2, description: Symbols, dependencies, call paths }
+  get_service_map:     { layer: L2, description: Contracts and service dependencies }
+  search_product_docs: { layer: L3, description: ai-ready wiki pages only }
+  get_work_item:       { layer: L4, description: Work item, acceptance criteria, comments }
+
+phases:
+  requirements:
+    tools: [get_glossary_term, search_product_docs, get_work_item]
+  design:
+    tools: [get_glossary_term, search_adrs, get_service_map,
+            search_code_graph, search_product_docs, get_work_item]
+  build:
+    tools: [get_glossary_term, search_adrs, get_spec,
+            search_code_graph, get_service_map]
+  test:
+    tools: [get_spec, search_code_graph]
+  release:
+    tools: [get_spec, get_work_item, search_adrs]
+
+# Align these states with your real process template (Azure DevOps or Jira).
+workItemStates:
+  New:      [requirements, design]
+  Approved: [design, build]
+  Active:   [build, test]
+  Resolved: [test, release]
+  Closed:   []
+
+# Role ceilings, mapped from identity-provider groups (e.g. Entra ID).
+roles:
+  developers: "*"
+  product-owners: [get_glossary_term, search_product_docs, get_work_item]
+  testers: [get_glossary_term, get_spec, search_code_graph, get_work_item]
+
+# Fields returned by get_work_item. Everything else (attachments, custom fields) is dropped.
+workItemFieldAllowlist: [id, title, description, acceptanceCriteria, state, comments, links]
+
+# Exceptions go through time-boxed group membership (e.g. Entra PIM), never through this file.

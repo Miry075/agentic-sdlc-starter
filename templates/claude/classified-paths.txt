@@ -1,0 +1,10 @@
+# Paths the PreToolUse hook blocks. One extended regex per line, matched against the file path.
+# Lines starting with # are comments.
+(^|/)\.env(\..*)?$
+(^|/)secrets/
+(^|/)seeds?/
+(^|/)testdata/
+(^|/)dumps?/
+\.(pfx|pem|key|bak|dump)$
+appsettings\.[^/]*\.Local\.json$
+(^|/)logs?/

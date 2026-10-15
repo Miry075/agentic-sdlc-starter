@@ -1,0 +1,27 @@
+# Azure Pipelines: add as a build validation policy on the main branch.
+trigger: none
+
+pr:
+  branches:
+    include: [main]
+
+pool:
+  vmImage: ubuntu-latest
+
+variables:
+  # Set to true on a PR (pipeline variable) to skip the AGENTS.md check, and say why in the PR.
+  SKIP_AGENTS_MD_CHECK: false
+
+steps:
+  - checkout: self
+    fetchDepth: 0
+
+  - bash: |
+      target="${SYSTEM_PULLREQUEST_TARGETBRANCH#refs/heads/}"
+      bash scripts/check-agents-md-freshness.sh "origin/${target}"
+    displayName: AGENTS.md is updated when the structure changes
+    env:
+      SKIP_AGENTS_MD_CHECK: $(SKIP_AGENTS_MD_CHECK)
+
+  - bash: bash scripts/check-docs-templates.sh .
+    displayName: ADRs and specs follow their template
