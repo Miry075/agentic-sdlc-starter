@@ -143,7 +143,7 @@ Rewrite the 10 most important business-rule pages with `templates/wiki/ai-ready-
 ## Roadmap
 
 - [x] Templates, policy, evaluation set, CI checks
-- [ ] Reference knowledge gateway (.NET, MCP): phase policy, data redaction, audit via OpenTelemetry
+- [ ] Reference knowledge gateway (.NET, MCP): phase policy, data redaction, audit via OpenTelemetry, upstream MCP servers. [Design](docs/gateway/DESIGN.md)
 - [ ] AI-readiness scanner: a score per repo, posted on every PR
 - [ ] Evaluation runner
 
