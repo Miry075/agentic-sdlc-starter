@@ -43,7 +43,8 @@ public interface IGatewayTool
     ToolDescriptor Descriptor { get; }
 
     /// <summary>State of the work item the call is about, or null when the tool is not about a work item.</summary>
-    Task<string?> GetWorkItemStateAsync(CallerContext caller, JsonObject arguments, CancellationToken cancellationToken);
+    Task<string?> GetWorkItemStateAsync(CallerContext caller, JsonObject arguments, CancellationToken cancellationToken) =>
+        Task.FromResult<string?>(null);
 
     /// <summary>Reads raw content. Only called after the policy allowed the call. <c>phase</c> is already removed.</summary>
     Task<string> ReadAsync(CallerContext caller, JsonObject arguments, CancellationToken cancellationToken);
