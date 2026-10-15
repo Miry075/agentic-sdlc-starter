@@ -12,6 +12,9 @@ public static partial class PolicyLoader
         .WithNamingConvention(CamelCaseNamingConvention.Instance)
         .Build();
 
+    /// <summary>Name of the gateway-defined tool that reads an upstream's resources.</summary>
+    public const string ReadResourceTool = "read_resource";
+
     [GeneratedRegex("^sha256:[0-9a-f]{64}$")]
     private static partial Regex PinFormat();
 
@@ -50,7 +53,7 @@ public static partial class PolicyLoader
         AddNativeTools(dto, tools, errors);
         var upstreams = AddUpstreams(dto, tools, errors);
 
-        var phases = BuildPhases(dto, tools, errors);
+        var phases = BuildPhases(dto, tools, upstreams, errors);
         var states = BuildStates(dto, phases, errors);
         var roles = BuildRoles(dto, tools, errors);
 
@@ -122,6 +125,17 @@ public static partial class PolicyLoader
 
             var allow = upstream.Resources?.Allow ?? [];
             var resourcePhases = (upstream.Resources?.Phases ?? []).ToHashSet(StringComparer.Ordinal);
+
+            if (allow.Count > 0)
+            {
+                var readResource = $"{name}.{ReadResourceTool}";
+                tools[readResource] = new ToolDefinition(readResource, upstream.Layer, false, name, null, Synthetic: true);
+            }
+            else if (resourcePhases.Count > 0)
+            {
+                errors.Add($"Upstream '{name}': 'resources.phases' needs at least one entry in 'resources.allow'.");
+            }
+
             upstreams[name] = new UpstreamPolicy(name, upstream.Layer, pins, allow, resourcePhases);
         }
 
@@ -129,9 +143,12 @@ public static partial class PolicyLoader
     }
 
     private static Dictionary<string, IReadOnlySet<string>> BuildPhases(
-        PolicyDto dto, Dictionary<string, ToolDefinition> tools, List<string> errors)
+        PolicyDto dto,
+        Dictionary<string, ToolDefinition> tools,
+        Dictionary<string, UpstreamPolicy> upstreams,
+        List<string> errors)
     {
-        var phases = new Dictionary<string, IReadOnlySet<string>>(StringComparer.Ordinal);
+        var phases = new Dictionary<string, HashSet<string>>(StringComparer.Ordinal);
 
         foreach (var (phaseName, phase) in dto.Phases ?? new())
         {
@@ -144,7 +161,7 @@ public static partial class PolicyLoader
                     continue;
                 }
 
-                if (definition.Upstream is not null && definition.Pin is null)
+                if (definition.Upstream is not null && definition.Pin is null && !definition.Synthetic)
                 {
                     errors.Add($"Phase '{phaseName}' uses upstream tool '{toolName}', which has no pin. Approve it first.");
                     continue;
@@ -156,7 +173,25 @@ public static partial class PolicyLoader
             phases[phaseName] = phaseTools;
         }
 
-        return phases;
+        // Resources an upstream exposes are readable in the phases its policy lists, and only there.
+        foreach (var upstream in upstreams.Values)
+        {
+            foreach (var phaseName in upstream.ResourcePhases)
+            {
+                if (!phases.TryGetValue(phaseName, out var phaseTools))
+                {
+                    errors.Add($"Upstream '{upstream.Name}' lists unknown resource phase '{phaseName}'.");
+                    continue;
+                }
+
+                if (tools.ContainsKey($"{upstream.Name}.{ReadResourceTool}"))
+                {
+                    phaseTools.Add($"{upstream.Name}.{ReadResourceTool}");
+                }
+            }
+        }
+
+        return phases.ToDictionary(p => p.Key, p => (IReadOnlySet<string>)p.Value, StringComparer.Ordinal);
     }
 
     private static Dictionary<string, IReadOnlySet<string>> BuildStates(

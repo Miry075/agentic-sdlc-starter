@@ -1,11 +1,16 @@
 namespace Knowledge.Policy;
 
+/// <param name="Synthetic">
+/// Defined by the gateway, not discovered from an upstream: the "&lt;upstream&gt;.read_resource" tool that exists
+/// when a policy allows resources for that upstream. It needs no pin because its definition is ours.
+/// </param>
 public sealed record ToolDefinition(
     string Name,
     string Layer,
     bool NeedsWorkItemState,
     string? Upstream,
-    string? Pin);
+    string? Pin,
+    bool Synthetic = false);
 
 public sealed record UpstreamPolicy(
     string Name,
