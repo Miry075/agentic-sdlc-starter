@@ -205,7 +205,18 @@ public sealed class ScannerCli(IRepoOpener opener, TimeProvider clock, IAssets a
         var scanner = new ReadinessScanner(DefaultChecks);
         var before = scanner.Scan(repo.Files).Score;
         output.WriteLine($"Running the /ai-readiness skill in Claude Code on {repo.Name}. This can take a while and uses your Claude plan.");
-        var code = agent.Run(Path.GetFullPath(path), AgentCommand.Arguments(sessionId));
+        output.WriteLine($"Session {sessionId}. Each step is logged below.");
+        output.WriteLine();
+        var code = agent.Run(Path.GetFullPath(path), AgentCommand.Arguments(sessionId), line =>
+        {
+            var stamp = clock.GetLocalNow().ToString("HH:mm:ss");
+            foreach (var entry in AgentProgress.Describe(line))
+            {
+                output.WriteLine(entry.Length == 0 ? string.Empty : $"[{stamp}] {entry}");
+            }
+
+            output.Flush();
+        });
 
         if (code != 0)
         {
