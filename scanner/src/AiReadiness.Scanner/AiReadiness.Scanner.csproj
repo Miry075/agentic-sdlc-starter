@@ -6,4 +6,15 @@
     <PackAsTool>true</PackAsTool>
     <ToolCommandName>ai-readiness</ToolCommandName>
   </PropertyGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="..\..\..\templates\claude\project-settings.json" LogicalName="assets/project-settings.json" />
+    <EmbeddedResource Include="..\..\..\templates\claude\hooks\block-classified.sh" LogicalName="assets/block-classified.sh" />
+    <EmbeddedResource Include="..\..\..\templates\claude\classified-paths.txt" LogicalName="assets/classified-paths.txt" />
+    <EmbeddedResource Include="..\..\..\scripts\check-agents-md-freshness.sh" LogicalName="assets/check-agents-md-freshness.sh" />
+    <EmbeddedResource Include="..\..\..\scripts\check-docs-templates.sh" LogicalName="assets/check-docs-templates.sh" />
+    <EmbeddedResource Include="..\..\..\ci\github\agent-context.yml" LogicalName="assets/github-agent-context.yml" />
+    <EmbeddedResource Include="..\..\..\ci\azure-devops\agent-context.yml" LogicalName="assets/azure-agent-context.yml" />
+    <EmbeddedResource Include="..\..\..\templates\repo\docs\adr\0000-template.md" LogicalName="assets/adr-0000-template.md" />
+    <EmbeddedResource Include="..\..\..\templates\repo\docs\adr\0001-record-architecture-decisions.md" LogicalName="assets/adr-0001-record-architecture-decisions.md" />
+  </ItemGroup>
 </Project>

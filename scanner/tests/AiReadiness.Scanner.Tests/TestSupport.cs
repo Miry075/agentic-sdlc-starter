@@ -1,9 +1,10 @@
 using AiReadiness.Scanner.Domain;
+using AiReadiness.Scanner.Remediation;
 
 namespace AiReadiness.Scanner.Tests;
 
 /// <summary>In-memory repository: the fake for the IRepoFiles port.</summary>
-internal sealed class FakeRepo : IRepoFiles
+internal sealed class FakeRepo : IRepoFiles, IRepoWriter
 {
     private readonly Dictionary<string, string> _files = new(StringComparer.Ordinal);
 
@@ -11,6 +12,19 @@ internal sealed class FakeRepo : IRepoFiles
     {
         _files[path] = content;
         return this;
+    }
+
+    public void CreateAll(IReadOnlyList<FileChange> changes)
+    {
+        if (changes.Any(c => _files.ContainsKey(c.Path)))
+        {
+            throw new FixConflictException("exists");
+        }
+
+        foreach (var c in changes)
+        {
+            _files[c.Path] = c.Content;
+        }
     }
 
     public bool FileExists(string path) => _files.ContainsKey(path);

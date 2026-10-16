@@ -9,9 +9,7 @@ public sealed partial class AdrCheck : IReadinessCheck
 
     public IReadOnlyList<Criterion> Evaluate(IRepoFiles repo)
     {
-        var adrs = repo.Files("docs/adr")
-            .Where(p => AdrFile().IsMatch(System.IO.Path.GetFileName(p)) && !System.IO.Path.GetFileName(p).StartsWith("0000", StringComparison.Ordinal))
-            .ToList();
+        var adrs = RealAdrs(repo);
         var accepted = adrs.Count(p => repo.ReadText(p) is { } t && AcceptedStatus().IsMatch(t));
 
         return
@@ -24,6 +22,11 @@ public sealed partial class AdrCheck : IReadinessCheck
                 "Set `Status: Accepted` on decisions that are in force, so agents know which ones apply."),
         ];
     }
+
+    /// <summary>ADR files in docs/adr, not counting the 0000 template.</summary>
+    public static IReadOnlyList<string> RealAdrs(IRepoFiles repo) => repo.Files("docs/adr")
+        .Where(p => AdrFile().IsMatch(System.IO.Path.GetFileName(p)) && !System.IO.Path.GetFileName(p).StartsWith("0000", StringComparison.Ordinal))
+        .ToList();
 
     [GeneratedRegex(@"^\d{4}-.+\.md$")]
     private static partial Regex AdrFile();

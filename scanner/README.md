@@ -17,9 +17,14 @@ The path can be relative or absolute and defaults to the current folder.
 | Option | Effect |
 |---|---|
 | `--json` | Full report as JSON, including every criterion |
-| `--min-score 60` | Exit code 1 when the score is below 60, for CI |
+| `--html report.html` | Also write a standalone HTML report (see below) |
+| `--cta-url <url>` / `--cta-text <text>` | Add a button to the HTML report, for example your booking page |
+| `--all` | Treat the path as a folder of repositories and rank them all (see below) |
+| `--fix` | Show what the scanner can add to raise the score, plus prompts for the rest (see below) |
+| `--apply` | With `--fix`: create the files |
+| `--min-score 60` | Exit code 1 when a score is below 60, for CI. With `--all`: when any repository is below |
 
-Exit codes: `0` ok, `1` below `--min-score`, `2` bad arguments or folder not found.
+Exit codes: `0` ok, `1` below `--min-score`, `2` bad arguments or folder not found, `3` could not apply fixes.
 
 Example output:
 
@@ -35,6 +40,64 @@ Example output:
 
 1. **+5** At least one committed spec in docs/specs. Commit a spec per work item ...
 ```
+
+## Raise the score: `--fix`
+
+```bash
+dotnet run --project scanner/src/AiReadiness.Scanner -- /path/to/repo --fix           # preview, writes nothing
+dotnet run --project scanner/src/AiReadiness.Scanner -- /path/to/repo --fix --apply   # create the files
+```
+
+The preview has two parts.
+
+**Automatic fixes** are files the scanner can create because their content is true for any repository. The gain of each is measured by scanning the repository as if the files existed, not estimated.
+
+| Fix | Creates | Only when |
+|---|---|---|
+| Guard secrets from agents | `.claude/settings.json` (deny rules and hook), `.claude/hooks/block-classified.sh`, `.claude/classified-paths.txt` | no `.claude/settings.json` yet |
+| Keep `.env` out of Git | `.gitignore` | no `.gitignore` yet |
+| First decision record | `docs/adr/0000-template.md`, `docs/adr/0001-record-architecture-decisions.md` (dated today) | no ADRs yet |
+| Point CLAUDE.md at AGENTS.md | `CLAUDE.md` | `AGENTS.md` exists, no `CLAUDE.md` |
+| CI checks | `.github/workflows/agent-context.yml` or `.azure-pipelines/agent-context.yml`, plus the two scripts in `scripts/` | `AGENTS.md` exists and the CI system is clear (a `.github` folder, a pipeline file or the Git remote) |
+
+The template files come from this repository (`templates/`, `scripts/`, `ci/`) and are compiled into the tool, so there is one source of truth.
+
+**Guided steps** need someone who knows the system: `AGENTS.md`, the glossary, specs, the evaluation set, further ADRs, and edits to files that already exist (`.gitignore`, `.claude/settings.json`). For each, the scanner prints a prompt to paste into Claude Code in that repository. The prompts tell it to base everything on what it can verify, to write `TODO(human): question` where it cannot, and never to invent facts. The scanner does not write this content itself: an empty or invented glossary would raise the score without making agents any better.
+
+Safety rules:
+
+- Without `--apply`, nothing is written.
+- It only creates files. If any target already exists, it writes nothing and exits with code 3.
+- It never writes outside the repository or through a symbolic link.
+- It does not commit. Review the files and commit them yourself.
+- `.claude/hooks/block-classified.sh` needs `jq` on each developer machine.
+- The CI checks fail pull requests that change the project structure without updating `AGENTS.md`. That is their purpose, but tell your team first.
+
+Exit codes: `0` ok, `1` below `--min-score`, `2` bad arguments or folder not found, `3` could not apply.
+
+## Shareable HTML report
+
+```bash
+dotnet run --project scanner/src/AiReadiness.Scanner -- /path/to/repo \
+  --html report.html --cta-url https://example.com/book --cta-text "Book a call"
+```
+
+One self-contained file: no scripts, no external requests. It shows the score, the score per area, the next actions and every check, with a light and dark theme. E-mail it, host it, or print it to PDF from the browser. The button only accepts http and https addresses, and every value is HTML-encoded.
+
+## Scan a whole organisation
+
+Clone the repositories into one folder, then scan the folder:
+
+```bash
+# GitHub
+gh repo list my-org --limit 200 --json name --jq '.[].name' | xargs -I{} gh repo clone my-org/{} repos/{} -- --depth 1
+# Azure DevOps
+az repos list --org https://dev.azure.com/my-org --project MyProject --query "[].name" -o tsv | xargs -I{} git clone --depth 1 https://dev.azure.com/my-org/MyProject/_git/{} repos/{}
+
+dotnet run --project scanner/src/AiReadiness.Scanner -- repos --all --html org.html
+```
+
+`--all` scans every direct subfolder that is a Git repository, and ranks them lowest score first with the biggest gap of each. Shallow clones are enough: the scanner reads files, not history.
 
 ## What is scored
 

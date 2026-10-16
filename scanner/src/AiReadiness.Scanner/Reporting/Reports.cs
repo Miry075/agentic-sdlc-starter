@@ -46,6 +46,26 @@ public static class MarkdownReport
         return sb.ToString();
     }
 
+    public static string RenderOrg(OrgAssessment org)
+    {
+        var sb = new StringBuilder();
+        sb.AppendLine($"# AI-readiness across {org.Ranked.Count} repositories: average {org.AverageScore}/100");
+        sb.AppendLine();
+        sb.AppendLine($"Strong {org.Count(ReadinessBand.Strong)} · Ready {org.Count(ReadinessBand.Ready)} · Partial {org.Count(ReadinessBand.Partial)} · Not ready {org.Count(ReadinessBand.NotReady)}");
+        sb.AppendLine();
+        sb.AppendLine("Lowest scores first.");
+        sb.AppendLine();
+        sb.AppendLine("| Repository | Score | Band | Biggest gap |");
+        sb.AppendLine("|---|---|---|---|");
+        foreach (var r in org.Ranked)
+        {
+            var gap = r.Assessment.Gaps.FirstOrDefault();
+            sb.AppendLine($"| {r.Name} | {r.Assessment.Score}/{r.Assessment.MaxScore} | {Label(r.Assessment.Band)} | {(gap is null ? "None" : $"+{gap.Weight} {gap.Name}")} |");
+        }
+
+        return sb.ToString();
+    }
+
     public static string Label(ReadinessBand band) => band switch
     {
         ReadinessBand.Strong => "Strong",
@@ -58,6 +78,21 @@ public static class MarkdownReport
 public static class JsonReport
 {
     private static readonly JsonSerializerOptions Options = new() { WriteIndented = true };
+
+    public static string RenderOrg(OrgAssessment org) =>
+        JsonSerializer.Serialize(new
+        {
+            repositories = org.Ranked.Count,
+            average = org.AverageScore,
+            ranked = org.Ranked.Select(r => new
+            {
+                repository = r.Name,
+                score = r.Assessment.Score,
+                max = r.Assessment.MaxScore,
+                band = MarkdownReport.Label(r.Assessment.Band),
+                gaps = r.Assessment.Gaps.Select(g => new { area = g.Area, name = g.Name, weight = g.Weight }),
+            }),
+        }, Options);
 
     public static string Render(Assessment assessment, string repoName) =>
         JsonSerializer.Serialize(new
