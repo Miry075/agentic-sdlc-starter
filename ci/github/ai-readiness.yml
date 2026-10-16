@@ -1,0 +1,29 @@
+# Copy to .github/workflows/ai-readiness.yml
+# Scores the repository on every pull request and shows the report on the run summary.
+name: AI-readiness
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Get the scanner
+        run: git clone --depth 1 https://github.com/Miry075/agentic-sdlc-starter.git "$RUNNER_TEMP/starter"
+
+      - name: Scan
+        # Set a repository variable AI_READINESS_MIN (for example 60) to fail the check below that score.
+        run: |
+          dotnet run --project "$RUNNER_TEMP/starter/scanner/src/AiReadiness.Scanner" -- . \
+            --min-score "${{ vars.AI_READINESS_MIN || 0 }}" | tee "$GITHUB_STEP_SUMMARY"

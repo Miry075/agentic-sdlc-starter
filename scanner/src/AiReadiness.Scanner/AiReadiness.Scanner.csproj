@@ -1,0 +1,9 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <AssemblyName>ai-readiness</AssemblyName>
+    <RootNamespace>AiReadiness.Scanner</RootNamespace>
+    <PackAsTool>true</PackAsTool>
+    <ToolCommandName>ai-readiness</ToolCommandName>
+  </PropertyGroup>
+</Project>

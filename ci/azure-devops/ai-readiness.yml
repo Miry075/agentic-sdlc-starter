@@ -1,0 +1,32 @@
+# Azure Pipelines: add as a build validation policy on the main branch.
+# Scores the repository on every pull request and attaches the report to the run.
+trigger: none
+
+pr:
+  branches:
+    include: [main]
+
+pool:
+  vmImage: ubuntu-latest
+
+variables:
+  # Fail the check below this score. 0 means report only.
+  AI_READINESS_MIN: 0
+
+steps:
+  - checkout: self
+
+  - task: UseDotNet@2
+    inputs:
+      version: 10.0.x
+
+  - bash: git clone --depth 1 https://github.com/Miry075/agentic-sdlc-starter.git "$(Agent.TempDirectory)/starter"
+    displayName: Get the scanner
+
+  - bash: |
+      dotnet run --project "$(Agent.TempDirectory)/starter/scanner/src/AiReadiness.Scanner" -- . \
+        --min-score "$(AI_READINESS_MIN)" | tee "$(Agent.TempDirectory)/ai-readiness.md"
+      status=${PIPESTATUS[0]}
+      echo "##vso[task.uploadsummary]$(Agent.TempDirectory)/ai-readiness.md"
+      exit $status
+    displayName: Scan
