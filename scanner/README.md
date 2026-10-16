@@ -123,7 +123,7 @@ ai-readiness sdlc /path/to/repo            # preview, writes nothing
 ai-readiness sdlc /path/to/repo --apply    # create the missing skills
 ```
 
-Installs `/sdlc`, `/requirements-phase`, `/design-phase`, `/build-phase`, `/test-phase`, `/deliver-phase` and `/release-phase` (the `azure-workitem-flow` process as resumable phases) into `.claude/skills/`, from `templates/claude/skills/` (compiled into the tool). Existing skills are never overwritten. `--apply` refuses to run on the default branch: create a feature branch first, then commit and open a pull request. What each phase does: [docs/CAPABILITIES.md](../docs/CAPABILITIES.md#the-sdlc-with-the-phase-skills).
+Installs `/sdlc`, `/requirements-phase`, `/design-phase`, `/build-phase`, `/test-phase`, `/deliver-phase` and `/release-phase` (the `azure-workitem-flow` process as resumable phases), plus `azure-workitem-flow` itself and its companion skills `dotnet-change-guardrails`, `dotnet-design-principles`, `dotnet-testing-standards` and `resolve-review-feedback`, into `.claude/skills/`, from `templates/claude/skills/` (compiled into the tool). Existing skills are never overwritten. `--apply` refuses to run on the default branch: create a feature branch first, then commit and open a pull request. What each phase does: [docs/CAPABILITIES.md](../docs/CAPABILITIES.md#the-sdlc-with-the-phase-skills).
 
 ## Shareable HTML report
 

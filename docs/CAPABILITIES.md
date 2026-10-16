@@ -57,11 +57,16 @@ Copy into each product repository (`templates/repo/`) or wiki (`templates/wiki/`
 | `skills/test-phase` | Build and test for real, walk existing AC first, then additional AC and use cases, health-sector sweep, honest review, `## Verification` in the spec, then commit named files only after approval. |
 | `skills/deliver-phase` | Ask who opens the PR; push and open it only with approval; propose Completed (Hours) as a human-equivalent estimate and the Resolved transition, never Closed; handle review comments with `resolve-review-feedback`. |
 | `skills/release-phase` | Release notes, migration/configuration/feature-flag checklist, rollback plan and blockers in `docs/releases/<version>.md`. Never deploys or tags. |
+| `skills/azure-workitem-flow` | The full work-item process in one skill: from a `dev.azure.com` work item link to branch, analysis, options, implementation, review, commit, PR and Resolved with hours, pausing at every step. |
+| `skills/dotnet-change-guardrails` | Process safety per phase: git safety, analysis grounded in code, scope, real build and test before any assessment, health-sector sweep, commit hygiene. |
+| `skills/dotnet-design-principles` | SOLID, DDD, layering, reuse over duplication, KISS, minimal footprint. |
+| `skills/dotnet-testing-standards` | Which tests must exist at which layer, in the same commit; testability as a design signal. |
+| `skills/resolve-review-feedback` | Fix what reviewers flagged on a PR, grounded in the current code and the project's conventions. |
 | `skills/ai-readiness` | Raises a repository's AI-readiness score without inventing content (see the scanner). |
 
 ### The SDLC with the phase skills
 
-The phase skills are `azure-workitem-flow` split into resumable phases, with the knowledge gateway and the phase policy added. They load the companion skills `dotnet-change-guardrails`, `dotnet-design-principles`, `dotnet-testing-standards` and `resolve-review-feedback` when they are available, and carry a short version of each rule when they are not.
+The phase skills are `azure-workitem-flow` split into resumable phases, with the knowledge gateway and the phase policy added. `ai-readiness sdlc` installs them together with `azure-workitem-flow` and its companion skills (`dotnet-change-guardrails`, `dotnet-design-principles`, `dotnet-testing-standards`, `resolve-review-feedback`), which each phase loads; each phase also carries a short version of the rules in case one is missing.
 
 ```mermaid
 flowchart LR

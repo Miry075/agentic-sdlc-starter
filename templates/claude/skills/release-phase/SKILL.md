@@ -9,14 +9,14 @@ You prepare the release. You never deploy, tag, publish or change environments.
 
 ## Companion skills
 
-Load these before the first step when they are available (plain name, `anthropic-skills:` prefix, or synced from claude.ai; all the same):
+Load these before the first step. `ai-readiness sdlc` installs them next to this skill in `.claude/skills/`; they may also be available as `anthropic-skills:` or synced from claude.ai (all the same):
 
 - `dotnet-change-guardrails`: process safety per phase (A git safety, B analysis, C implementation, D verification, E commit).
 - `dotnet-design-principles`: SOLID, DDD, layering, reuse over duplication, minimal footprint.
 - `dotnet-testing-standards`: which tests must exist, at which layer, in the same commit.
 - `resolve-review-feedback`: fixing what reviewers flagged on the pull request.
 
-This flow follows `azure-workitem-flow` step by step. If a companion skill is missing, apply the short version given in each step. If the repository is not .NET, skip the `dotnet-` skills and follow the repository's own conventions.
+This flow follows `azure-workitem-flow` (also installed) step by step. If a companion skill is missing, apply the short version given in each step. If the repository is not .NET, skip the `dotnet-` skills and follow the repository's own conventions.
 
 ## Ground rules (every phase)
 

@@ -22,11 +22,25 @@ public class SdlcSkillsTests
     [InlineData("test-phase")]
     [InlineData("deliver-phase")]
     [InlineData("release-phase")]
+    [InlineData("azure-workitem-flow")]
+    [InlineData("dotnet-change-guardrails")]
+    [InlineData("dotnet-design-principles")]
+    [InlineData("dotnet-testing-standards")]
+    [InlineData("resolve-review-feedback")]
     public void EverySkill_IsEmbeddedWithItsOwnName(string name)
     {
         var content = new EmbeddedAssets().Read(SdlcSkills.AssetName(name));
 
-        Assert.StartsWith($"---\nname: {name}\n", content);
+        Assert.Matches(new System.Text.RegularExpressions.Regex($"^---\\nname: \"?{name}\"?\\n"), content);
+    }
+
+    [Fact]
+    public void PublishedSkills_CarryNoPersonalOrEmployerContext()
+    {
+        var content = new EmbeddedAssets().Read(SdlcSkills.AssetName("azure-workitem-flow"));
+
+        Assert.DoesNotContain("The user is a senior", content);
+        Assert.DoesNotContain("this health-sector project", content);
     }
 
     [Theory]

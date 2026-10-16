@@ -24,5 +24,10 @@
     <EmbeddedResource Include="..\..\..\templates\claude\skills\deliver-phase\SKILL.md" LogicalName="assets/skills/deliver-phase.md" />
     <EmbeddedResource Include="..\..\..\templates\claude\skills\release-phase\SKILL.md" LogicalName="assets/skills/release-phase.md" />
     <EmbeddedResource Include="..\..\..\templates\claude\skills\sdlc\SKILL.md" LogicalName="assets/skills/sdlc.md" />
+    <EmbeddedResource Include="..\..\..\templates\claude\skills\azure-workitem-flow\SKILL.md" LogicalName="assets/skills/azure-workitem-flow.md" />
+    <EmbeddedResource Include="..\..\..\templates\claude\skills\dotnet-change-guardrails\SKILL.md" LogicalName="assets/skills/dotnet-change-guardrails.md" />
+    <EmbeddedResource Include="..\..\..\templates\claude\skills\dotnet-design-principles\SKILL.md" LogicalName="assets/skills/dotnet-design-principles.md" />
+    <EmbeddedResource Include="..\..\..\templates\claude\skills\dotnet-testing-standards\SKILL.md" LogicalName="assets/skills/dotnet-testing-standards.md" />
+    <EmbeddedResource Include="..\..\..\templates\claude\skills\resolve-review-feedback\SKILL.md" LogicalName="assets/skills/resolve-review-feedback.md" />
   </ItemGroup>
 </Project>

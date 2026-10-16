@@ -4,7 +4,10 @@ namespace AiReadiness.Scanner;
 public static class SdlcSkills
 {
     public static IReadOnlyList<string> Names { get; } =
-        ["sdlc", "requirements-phase", "design-phase", "build-phase", "test-phase", "deliver-phase", "release-phase"];
+        [
+            "sdlc", "requirements-phase", "design-phase", "build-phase", "test-phase", "deliver-phase", "release-phase",
+            "azure-workitem-flow", "dotnet-change-guardrails", "dotnet-design-principles", "dotnet-testing-standards", "resolve-review-feedback",
+        ];
 
     public static string RepoPath(string name) => $".claude/skills/{name}/SKILL.md";
 
