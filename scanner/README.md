@@ -60,6 +60,7 @@ The preview has two parts.
 | Keep `.env` out of Git | `.gitignore` | no `.gitignore` yet |
 | First decision record | `docs/adr/0000-template.md`, `docs/adr/0001-record-architecture-decisions.md` (dated today) | no ADRs yet |
 | Point CLAUDE.md at AGENTS.md | `CLAUDE.md` | `AGENTS.md` exists, no `CLAUDE.md` |
+| `/ai-readiness` skill | `.claude/skills/ai-readiness/SKILL.md` (earns no points; it does the rest, see below) | not installed yet |
 | CI checks | `.github/workflows/agent-context.yml` or `.azure-pipelines/agent-context.yml`, plus the two scripts in `scripts/` | `AGENTS.md` exists and the CI system is clear (a `.github` folder, a pipeline file or the Git remote) |
 
 The template files come from this repository (`templates/`, `scripts/`, `ci/`) and are compiled into the tool, so there is one source of truth.
@@ -76,6 +77,20 @@ Safety rules:
 - The CI checks fail pull requests that change the project structure without updating `AGENTS.md`. That is their purpose, but tell your team first.
 
 Exit codes: `0` ok, `1` below `--min-score`, `2` bad arguments or folder not found, `3` could not apply.
+
+`--fix --json` (and `--fix --apply --json`) prints the plan as JSON: scores, files, notes, and each guided step with its `prompt` and `criteria`. That is what the skill reads.
+
+## Reach the maximum: the `/ai-readiness` skill
+
+`--fix --apply` installs a Claude Code skill in the repository. In Claude Code, in that repository, type `/ai-readiness`. It:
+
+1. checks that the scanner is installed and the Git tree is clean, and creates a branch `ai-readiness/<date>`;
+2. applies the safe fixes and commits them;
+3. works through the guided steps, largest gain first, following each prompt, re-running `--fix --apply` when a step unlocks new fixes (CLAUDE.md and the CI checks need AGENTS.md first), with one commit per area;
+4. collects every `TODO(human)` question and asks them all at once, then fills in your answers;
+5. stops when the score stops rising, opens the HTML report and summarises before, after and what is left.
+
+It never invents content, never touches application code, never pushes or merges. Evaluation questions stay out until you confirm them, and specs need real work items: read from Azure DevOps or Jira when such a tool is connected, otherwise from your answers. So the last points always need you. The source is `templates/claude/skills/ai-readiness/SKILL.md`.
 
 ## Shareable HTML report
 

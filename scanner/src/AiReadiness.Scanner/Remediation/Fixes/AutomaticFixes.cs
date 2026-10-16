@@ -152,3 +152,15 @@ public sealed partial class CiChecksFix : IAutomaticRemediation
     [GeneratedRegex(@"^\s*url\s*=\s*(\S+)", RegexOptions.Multiline)]
     private static partial Regex RemoteUrl();
 }
+
+/// <summary>Installs the Claude Code skill that works through the guided steps. Earns no points itself.</summary>
+public sealed class ReadinessSkillFix : IAutomaticRemediation
+{
+    public const string Path = ".claude/skills/ai-readiness/SKILL.md";
+
+    public ProposedFix? Propose(RemediationContext context) =>
+        context.Repo.FileExists(Path)
+            ? null
+            : new ProposedFix("Install the /ai-readiness skill for Claude Code", [new FileChange(Path, context.Assets.Read(AssetNames.ReadinessSkill))],
+                ["Run /ai-readiness in Claude Code in this repository to work through the guided steps."]);
+}

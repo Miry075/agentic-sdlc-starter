@@ -90,7 +90,6 @@ public class ScannerCliTests
     [InlineData("--cta-url not-a-url")]
     [InlineData("--apply")]
     [InlineData("--fix --all")]
-    [InlineData("--fix --json")]
     [InlineData("--fix --html")]
     public void Run_WithBadArguments_ReturnsUsageError(string commandLine)
     {
@@ -350,6 +349,34 @@ public class ScannerCliTests
         RunWithBrowser(browser, new FakeOpener(), "--fix");
 
         Assert.Empty(browser.Opened);
+    }
+
+    [Fact]
+    public void Run_FixJson_GivesToolsThePlanWithPromptsAndCriteria()
+    {
+        var (code, output, _) = Run(new FakeOpener(("repo", new FakeRepo())), "--fix", "--json");
+
+        Assert.Equal(ScannerCli.Ok, code);
+        using var doc = JsonDocument.Parse(output);
+        var root = doc.RootElement;
+        Assert.False(root.GetProperty("applied").GetBoolean());
+        Assert.Equal(14, root.GetProperty("before").GetInt32());
+        var agents = root.GetProperty("guided").EnumerateArray().Single(g => g.GetProperty("title").GetString() == "Write AGENTS.md");
+        Assert.Contains("Do not invent", agents.GetProperty("prompt").GetString());
+        Assert.Contains(agents.GetProperty("criteria").EnumerateArray(), c => c.GetString() == "AGENTS.md exists");
+    }
+
+    [Fact]
+    public void Run_FixApplyJson_ReportsTheScoreAfterWriting()
+    {
+        var repo = new FakeRepo();
+
+        var (_, output, _) = Run(new FakeOpener(("repo", repo)), "--fix", "--apply", "--json");
+
+        using var doc = JsonDocument.Parse(output);
+        Assert.True(doc.RootElement.GetProperty("applied").GetBoolean());
+        Assert.Equal(doc.RootElement.GetProperty("afterAutomatic").GetInt32(), doc.RootElement.GetProperty("score").GetInt32());
+        Assert.True(repo.FileExists(".claude/skills/ai-readiness/SKILL.md"));
     }
 }
 

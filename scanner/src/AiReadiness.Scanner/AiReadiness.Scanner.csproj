@@ -16,5 +16,6 @@
     <EmbeddedResource Include="..\..\..\ci\azure-devops\agent-context.yml" LogicalName="assets/azure-agent-context.yml" />
     <EmbeddedResource Include="..\..\..\templates\repo\docs\adr\0000-template.md" LogicalName="assets/adr-0000-template.md" />
     <EmbeddedResource Include="..\..\..\templates\repo\docs\adr\0001-record-architecture-decisions.md" LogicalName="assets/adr-0001-record-architecture-decisions.md" />
+    <EmbeddedResource Include="..\..\..\templates\claude\skills\ai-readiness\SKILL.md" LogicalName="assets/ai-readiness-skill.md" />
   </ItemGroup>
 </Project>

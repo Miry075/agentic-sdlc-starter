@@ -59,7 +59,7 @@ public class RemediationPlannerTests
         var plan = Plan(new FakeRepo());
 
         Assert.Equal(
-            ["Block agents from reading secrets and classified files", "Keep .env files out of Git", "Record the first architecture decision"],
+            ["Block agents from reading secrets and classified files", "Keep .env files out of Git", "Record the first architecture decision", "Install the /ai-readiness skill for Claude Code"],
             plan.Automatic.Select(f => f.Title));
     }
 
@@ -68,8 +68,20 @@ public class RemediationPlannerTests
     {
         var plan = Plan(new FakeRepo().With("AGENTS.md", Sample.Agents));
 
-        Assert.True(plan.Automatic.All(f => f.Gain > 0));
+        Assert.True(plan.Automatic.All(f => f.Gain >= 0));
         Assert.Equal(plan.Before.Score + plan.Automatic.Sum(f => f.Gain), plan.After.Score);
+    }
+
+    [Fact]
+    public void Plan_InstallsTheSkillOnce_AndItEarnsNoPointsByItself()
+    {
+        var plan = Plan(new FakeRepo());
+        var skill = plan.Automatic.Single(f => f.Changes.Any(c => c.Path == ReadinessSkillFix.Path));
+        var again = Plan(new FakeRepo().With(ReadinessSkillFix.Path, "mine"));
+
+        Assert.Equal(0, skill.Gain);
+        Assert.StartsWith("---\nname: ai-readiness", skill.Changes.Single().Content);
+        Assert.DoesNotContain(again.AllChanges, c => c.Path == ReadinessSkillFix.Path);
     }
 
     [Fact]

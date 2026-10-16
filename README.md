@@ -100,7 +100,7 @@ agentic-sdlc-starter/
 │       ├── project-settings.json     # per-repo Claude Code settings (deny rules + hook)
 │       ├── hooks/block-classified.sh # PreToolUse hook: blocks classified files
 │       ├── classified-paths.txt      # patterns the hook blocks
-│       └── skills/                   # one skill per SDLC phase
+│       └── skills/                   # one skill per SDLC phase, plus /ai-readiness
 ├── policy/phase-access.yaml          # phase → tools policy, deny by default
 ├── src/, tests/, samples/            # reference knowledge gateway (.NET). See docs/gateway/README.md
 ├── scanner/                          # AI-readiness scanner (.NET CLI): score + next actions
