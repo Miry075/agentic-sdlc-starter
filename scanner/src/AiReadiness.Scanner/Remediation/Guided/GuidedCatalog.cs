@@ -58,7 +58,7 @@ public static class GuidedCatalog
 
                 {Honesty}
 
-                Each spec needs the headings: Problem, Acceptance criteria (numbered and testable), Out of scope, Open questions. Take the content from the work item if you can read it, otherwise from the commits and code, and mark the rest `TODO(human): ...`.
+                Each spec starts with `# <work item id>: <title>` and has these `##` headings, in this order: Goal, Acceptance criteria (numbered and testable), Edge cases, Non-goals, Business rules involved, Related ADRs. The CI check `scripts/check-docs-templates.sh` fails without Goal, Acceptance criteria and Non-goals. Take the content from the work item if you can read it, otherwise from the commits and code, and mark the rest `TODO(human): ...`.
                 Also create `docs/specs/TEMPLATE.md` with those headings if it does not exist.
 
                 Criteria to satisfy:
@@ -97,7 +97,7 @@ public static class GuidedCatalog
 
                 {Honesty}
 
-                Write up to three ADRs for decisions already visible in the code: data store, messaging, authentication, layering. Set `Status: Accepted` only for decisions that are clearly in force; use `Proposed` when unsure and list them for me to confirm.
+                Write up to three ADRs for decisions already visible in the code: data store, messaging, authentication, layering. Each ADR needs the headings `## Status`, `## Context`, `## Decision`, `## Consequences`. Under `## Status`, write `Accepted` on its own line only for decisions that are clearly in force; write `Proposed` when unsure and list them for me to confirm. The CI check `scripts/check-docs-templates.sh` fails otherwise.
 
                 Criteria to satisfy:
                 {Bullets(failing)}

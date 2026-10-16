@@ -38,7 +38,8 @@ You prepare this repository for AI coding agents, guided by the `ai-readiness` s
    - **Glossary**: take terms from entity names, enum values, routes, table names and comments. Write a definition only when the code or docs support it; otherwise `TODO(human)`.
    - **Specs**: find work item ids in branch names and commit messages. If an Azure DevOps or Jira tool is available in this session, read the work items from it. Otherwise ask the user for the ids and acceptance criteria.
    - **Evaluation set**: draft questions answered by files that exist, then ask the user to confirm, change or drop each one. Only confirmed questions stay in `evals/questions.yaml`.
-   - **ADRs**: only decisions visible in the code. `Status: Accepted` only when clearly in force; otherwise `Proposed`.
+   - **ADRs**: only decisions visible in the code, using `docs/adr/0000-template.md`. Under `## Status`, write `Accepted` on its own line only when clearly in force; otherwise `Proposed`.
+   - **Templates**: specs need the headings Goal, Acceptance criteria and Non-goals, and ADRs need Status, Context, Decision and Consequences, or the CI check `scripts/check-docs-templates.sh` fails. Run `bash scripts/check-docs-templates.sh .` when the script exists.
    - **CI checks**: if AGENTS.md now exists, run `ai-readiness . --fix --apply --json` again first: the scanner adds the checks itself.
 4. After each step, run `ai-readiness . --fix --apply --json` (some fixes depend on files you just wrote), then commit with a message naming the area, for example `AI-readiness: AGENTS.md`.
 

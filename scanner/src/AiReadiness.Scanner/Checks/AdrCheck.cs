@@ -19,7 +19,7 @@ public sealed partial class AdrCheck : IReadinessCheck
             new(Area, "At least three ADRs", 3, adrs.Count >= 3,
                 "Write ADRs for the decisions people keep re-asking: data store, messaging, auth, layering."),
             new(Area, "At least one ADR is accepted", 3, accepted >= 1,
-                "Set `Status: Accepted` on decisions that are in force, so agents know which ones apply."),
+                "Write `Accepted` on its own line under the `## Status` heading of decisions that are in force, so agents know which ones apply."),
         ];
     }
 

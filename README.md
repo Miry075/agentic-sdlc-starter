@@ -83,6 +83,8 @@ The full policy is in [`policy/phase-access.yaml`](policy/phase-access.yaml).
 
 ## What's in this repo
 
+Every capability, in one page: [docs/CAPABILITIES.md](docs/CAPABILITIES.md).
+
 ```text
 agentic-sdlc-starter/
 ├── templates/

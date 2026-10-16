@@ -180,6 +180,18 @@ public class RemediationPlannerTests
     }
 
     [Fact]
+    public void Plan_SpecAndAdrPromptsUseTheHeadingsTheCiCheckRequires()
+    {
+        var plan = Plan(new FakeRepo());
+        var specs = plan.Guided.Single(g => g.Title == "Write the first specs").Prompt;
+        var adrs = Plan(new FakeRepo().With("docs/adr/0001-a.md", "## Status\n\nAccepted")).Guided.Single(g => g.Title == "Record more architecture decisions").Prompt;
+
+        Assert.All(["Goal", "Acceptance criteria", "Non-goals"], h => Assert.Contains(h, specs));
+        Assert.All(["## Status", "## Context", "## Decision", "## Consequences"], h => Assert.Contains(h, adrs));
+        Assert.DoesNotContain("Status: Accepted", adrs);
+    }
+
+    [Fact]
     public void Plan_AfterApplyingEverything_FindsNothingMoreToCreate()
     {
         var repo = new FakeRepo().With("AGENTS.md", Sample.Agents).With(".github/x", "");
