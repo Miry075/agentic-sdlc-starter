@@ -31,7 +31,13 @@ public sealed class ScannerCli(IRepoOpener opener, TimeProvider clock, IAssets a
           --fix             show what the scanner can add to raise the score, plus prompts for the rest
           --apply           with --fix: create the files (never overwrites an existing file)
           --min-score <n>   exit with code 1 when a score is lower than n (for CI)
+          --version         print the installed version
         """;
+
+    public static string Version { get; } =
+        (typeof(ScannerCli).Assembly.GetCustomAttributes(typeof(System.Reflection.AssemblyInformationalVersionAttribute), false)
+            .OfType<System.Reflection.AssemblyInformationalVersionAttribute>().FirstOrDefault()?.InformationalVersion ?? "unknown")
+        .Split('+')[0];
 
     public static IReadOnlyList<IReadinessCheck> DefaultChecks { get; } =
     [
@@ -47,6 +53,12 @@ public sealed class ScannerCli(IRepoOpener opener, TimeProvider clock, IAssets a
 
     public int Run(string[] args, TextWriter output, TextWriter error)
     {
+        if (args.Contains("--version"))
+        {
+            output.WriteLine(Version);
+            return Ok;
+        }
+
         if (args.Contains("-h") || args.Contains("--help"))
         {
             output.WriteLine(Usage);
@@ -134,6 +146,11 @@ public sealed class ScannerCli(IRepoOpener opener, TimeProvider clock, IAssets a
             else if (arg.StartsWith("--", StringComparison.Ordinal))
             {
                 error.WriteLine($"Unknown option {arg} for agent.{Environment.NewLine}{Usage}");
+                return UsageError;
+            }
+            else if (path != ".")
+            {
+                error.WriteLine($"Give one repository path, not two ('{path}' and '{arg}').");
                 return UsageError;
             }
             else

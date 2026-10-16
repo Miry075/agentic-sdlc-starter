@@ -4,6 +4,17 @@ Scores a repository out of 100 on how ready it is for AI coding agents, and list
 
 It reads files only. It does not call any service, send anything anywhere, or need an AI model.
 
+## Install
+
+Needs the .NET 10 SDK. From a clone of this repository:
+
+```bash
+scanner/install.sh       # installs or updates the global `ai-readiness` command
+ai-readiness --version
+```
+
+Run it again after every `git pull`. Each run gets a new version number, so the NuGet cache never keeps an old build (a plain `dotnet pack` + `dotnet tool install` reuses the cached 1.0.0). If `ai-readiness` is not found, add `~/.dotnet/tools` to your `PATH`.
+
 ## Run it
 
 Needs the .NET 10 SDK.

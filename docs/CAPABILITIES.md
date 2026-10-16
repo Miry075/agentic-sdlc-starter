@@ -187,8 +187,8 @@ The last points always need you: real glossary meanings, confirmed evaluation qu
 ### Install
 
 ```bash
-dotnet pack scanner/src/AiReadiness.Scanner -c Release -o ~/ai-readiness-nupkg
-dotnet tool install --global ai-readiness --add-source ~/ai-readiness-nupkg
+scanner/install.sh          # install, or update after a git pull
+ai-readiness --version
 ```
 
 Runs on macOS, Linux and Windows with the .NET 10 SDK.

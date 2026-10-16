@@ -91,6 +91,7 @@ public class ScannerCliTests
     [InlineData("--apply")]
     [InlineData("--fix --all")]
     [InlineData("--fix --html")]
+    [InlineData("agent-folder other-folder")]
     public void Run_WithBadArguments_ReturnsUsageError(string commandLine)
     {
         var (code, _, error) = Run(commandLine.Split(' '));
@@ -377,6 +378,16 @@ public class ScannerCliTests
         Assert.True(doc.RootElement.GetProperty("applied").GetBoolean());
         Assert.Equal(doc.RootElement.GetProperty("afterAutomatic").GetInt32(), doc.RootElement.GetProperty("score").GetInt32());
         Assert.True(repo.FileExists(".claude/skills/ai-readiness/SKILL.md"));
+    }
+
+    [Fact]
+    public void Run_WithVersion_PrintsTheToolVersion()
+    {
+        var (code, output, _) = Run("--version");
+
+        Assert.Equal(ScannerCli.Ok, code);
+        Assert.Equal(ScannerCli.Version, output.Trim());
+        Assert.NotEqual("unknown", ScannerCli.Version);
     }
 }
 
