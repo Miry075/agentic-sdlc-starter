@@ -22,6 +22,21 @@ Then ask it, for example: *"Using the knowledge gateway, in phase requirements, 
 
 Health: `GET /health/live`, `GET /health/ready`.
 
+## Run it on your own repository and Azure DevOps (still dev mode)
+
+Point the gateway at a real repository folder and read your real work items with your own Azure CLI sign-in. No PAT and no secret are stored; every call uses exactly your rights.
+
+```bash
+az login
+cd /path/to/agentic-sdlc-starter
+Auth__Dev__UseAzureCli=true \
+Repo__Source=FileSystem Repo__Path=/path/to/your/repo \
+WorkItems__Source=AzureDevOps WorkItems__AzureDevOps__Organization=<org> WorkItems__AzureDevOps__Project=<project> \
+dotnet run --project src/Knowledge.Gateway
+```
+
+The repository must contain the files the tools serve: `docs/domain/glossary.md`, `docs/adr/`, `docs/specs/<id>.md` (the `/ai-readiness` skill creates them). Dev mode still refuses to start when `ASPNETCORE_ENVIRONMENT=Production`.
+
 ## Build and test
 
 ```bash
