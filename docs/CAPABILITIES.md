@@ -62,6 +62,7 @@ Copy into each product repository (`templates/repo/`) or wiki (`templates/wiki/`
 | `skills/dotnet-design-principles` | SOLID, DDD, layering, reuse over duplication, KISS, minimal footprint. |
 | `skills/dotnet-testing-standards` | Which tests must exist at which layer, in the same commit; testability as a design signal. |
 | `skills/resolve-review-feedback` | Fix what reviewers flagged on a PR, grounded in the current code and the project's conventions. |
+| `skills/legacy-discovery` | Reverse-engineers a legacy application (.NET Framework focus: WebForms, MVC, WCF, services, stored procedures) into a glossary, business rules and use cases with `file:line` evidence and a confidence level, plus questions. Read-only on the code. You validate each entry by pull request; validated use cases then become work items whose rules are the existing acceptance criteria. |
 | `skills/ai-readiness` | Raises a repository's AI-readiness score without inventing content (see the scanner). |
 
 ### The SDLC with the phase skills

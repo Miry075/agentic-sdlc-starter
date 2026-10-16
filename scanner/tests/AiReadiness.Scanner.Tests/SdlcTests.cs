@@ -27,6 +27,7 @@ public class SdlcSkillsTests
     [InlineData("dotnet-design-principles")]
     [InlineData("dotnet-testing-standards")]
     [InlineData("resolve-review-feedback")]
+    [InlineData("legacy-discovery")]
     public void EverySkill_IsEmbeddedWithItsOwnName(string name)
     {
         var content = new EmbeddedAssets().Read(SdlcSkills.AssetName(name));
@@ -129,5 +130,20 @@ public class SdlcSkillsTests
         }
 
         Assert.Contains("Nothing to install", Run(repo, new FakeGit()).Out);
+    }
+
+    [Theory]
+    [InlineData("Evidence or nothing")]
+    [InlineData("`Certain`")]
+    [InlineData("`Inferred`")]
+    [InlineData("`Unclear`")]
+    [InlineData("Read-only")]
+    [InlineData("Never commit on the default branch")]
+    [InlineData("Status starts as `Proposed`")]
+    [InlineData("Do not start any implementation")]
+    [InlineData("**existing acceptance criteria**")]
+    public void LegacyDiscovery_KeepsEvidenceConfidenceAndTheValidationGate(string text)
+    {
+        Assert.Contains(text, new EmbeddedAssets().Read(SdlcSkills.AssetName("legacy-discovery")));
     }
 }
