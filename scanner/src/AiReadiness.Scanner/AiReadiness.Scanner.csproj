@@ -17,5 +17,17 @@
     <EmbeddedResource Include="..\..\..\templates\repo\docs\adr\0000-template.md" LogicalName="assets/adr-0000-template.md" />
     <EmbeddedResource Include="..\..\..\templates\repo\docs\adr\0001-record-architecture-decisions.md" LogicalName="assets/adr-0001-record-architecture-decisions.md" />
     <EmbeddedResource Include="..\..\..\templates\claude\skills\ai-readiness\SKILL.md" LogicalName="assets/ai-readiness-skill.md" />
+    <EmbeddedResource Include="..\..\..\templates\claude\skills\requirements-phase\SKILL.md" LogicalName="assets/skills/requirements-phase.md" />
+    <EmbeddedResource Include="..\..\..\templates\claude\skills\design-phase\SKILL.md" LogicalName="assets/skills/design-phase.md" />
+    <EmbeddedResource Include="..\..\..\templates\claude\skills\build-phase\SKILL.md" LogicalName="assets/skills/build-phase.md" />
+    <EmbeddedResource Include="..\..\..\templates\claude\skills\test-phase\SKILL.md" LogicalName="assets/skills/test-phase.md" />
+    <EmbeddedResource Include="..\..\..\templates\claude\skills\deliver-phase\SKILL.md" LogicalName="assets/skills/deliver-phase.md" />
+    <EmbeddedResource Include="..\..\..\templates\claude\skills\release-phase\SKILL.md" LogicalName="assets/skills/release-phase.md" />
+    <EmbeddedResource Include="..\..\..\templates\claude\skills\sdlc\SKILL.md" LogicalName="assets/skills/sdlc.md" />
+    <EmbeddedResource Include="..\..\..\templates\claude\skills\azure-workitem-flow\SKILL.md" LogicalName="assets/skills/azure-workitem-flow.md" />
+    <EmbeddedResource Include="..\..\..\templates\claude\skills\dotnet-change-guardrails\SKILL.md" LogicalName="assets/skills/dotnet-change-guardrails.md" />
+    <EmbeddedResource Include="..\..\..\templates\claude\skills\dotnet-design-principles\SKILL.md" LogicalName="assets/skills/dotnet-design-principles.md" />
+    <EmbeddedResource Include="..\..\..\templates\claude\skills\dotnet-testing-standards\SKILL.md" LogicalName="assets/skills/dotnet-testing-standards.md" />
+    <EmbeddedResource Include="..\..\..\templates\claude\skills\resolve-review-feedback\SKILL.md" LogicalName="assets/skills/resolve-review-feedback.md" />
   </ItemGroup>
 </Project>

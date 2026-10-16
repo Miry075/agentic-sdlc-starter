@@ -19,6 +19,7 @@ public static class AssetNames
     [
         ProjectSettings, HookScript, ClassifiedPaths, FreshnessScript, DocsTemplateScript,
         GithubWorkflow, AzurePipeline, AdrTemplate, FirstAdr, ReadinessSkill,
+        .. SdlcSkills.Names.Select(SdlcSkills.AssetName),
     ];
 }
 

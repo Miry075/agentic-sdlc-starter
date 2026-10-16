@@ -50,9 +50,44 @@ Copy into each product repository (`templates/repo/`) or wiki (`templates/wiki/`
 | `project-settings.json` | The same deny rules and hook for one repository (`.claude/settings.json`). |
 | `hooks/block-classified.sh` | `PreToolUse` hook: blocks Read, Edit, Write, Grep and Glob on paths matching `classified-paths.txt`. Needs `jq`. |
 | `classified-paths.txt` | The blocked path patterns, one extended regex per line. |
-| `skills/requirements-phase` | Turns a New work item into a committed spec with testable acceptance criteria, through the gateway. |
-| `skills/build-phase` | Implements an approved spec: reads AGENTS.md, the spec, ADRs and glossary first; one test per acceptance criterion. |
+| `skills/sdlc` | `/sdlc <id or work item URL>`: resumes from the repository and runs the next phase of the work item. |
+| `skills/requirements-phase` | Fetch the work item, create `feature/<id>-<title>`, split existing from additional AC, Opus analysis of what and why (existing AC confirmed first), use-case sweep, spec committed. |
+| `skills/design-phase` | 2 to 3 real options assessed on use cases, existing AC, design fit and testability; the user chooses; `## Design` in the spec and a Proposed ADR for structural decisions. |
+| `skills/build-phase` | After an explicit go-ahead: the chosen option only, local conventions, design principles, tests written in the same step. No commit yet. |
+| `skills/test-phase` | Build and test for real, walk existing AC first, then additional AC and use cases, health-sector sweep, honest review, `## Verification` in the spec, then commit named files only after approval. |
+| `skills/deliver-phase` | Ask who opens the PR; push and open it only with approval; propose Completed (Hours) as a human-equivalent estimate and the Resolved transition, never Closed; handle review comments with `resolve-review-feedback`. |
+| `skills/release-phase` | Release notes, migration/configuration/feature-flag checklist, rollback plan and blockers in `docs/releases/<version>.md`. Never deploys or tags. |
+| `skills/azure-workitem-flow` | The full work-item process in one skill: from a `dev.azure.com` work item link to branch, analysis, options, implementation, review, commit, PR and Resolved with hours, pausing at every step. |
+| `skills/dotnet-change-guardrails` | Process safety per phase: git safety, analysis grounded in code, scope, real build and test before any assessment, health-sector sweep, commit hygiene. |
+| `skills/dotnet-design-principles` | SOLID, DDD, layering, reuse over duplication, KISS, minimal footprint. |
+| `skills/dotnet-testing-standards` | Which tests must exist at which layer, in the same commit; testability as a design signal. |
+| `skills/resolve-review-feedback` | Fix what reviewers flagged on a PR, grounded in the current code and the project's conventions. |
 | `skills/ai-readiness` | Raises a repository's AI-readiness score without inventing content (see the scanner). |
+
+### The SDLC with the phase skills
+
+The phase skills are `azure-workitem-flow` split into resumable phases, with the knowledge gateway and the phase policy added. `ai-readiness sdlc` installs them together with `azure-workitem-flow` and its companion skills (`dotnet-change-guardrails`, `dotnet-design-principles`, `dotnet-testing-standards`, `resolve-review-feedback`), which each phase loads; each phase also carries a short version of the rules in case one is missing.
+
+```mermaid
+flowchart LR
+  WI[Work item] --> R["/requirements-phase<br/>fetch, branch, what and why,<br/>existing AC confirmed, use cases"]
+  R --> D["/design-phase<br/>options, user chooses"]
+  D --> B["/build-phase<br/>go-ahead, code + tests"]
+  B --> T["/test-phase<br/>verify, review, commit"]
+  T --> DL["/deliver-phase<br/>PR, hours, Resolved"]
+  DL -- review comments --> DL
+```
+
+One branch per work item (`feature/<id>-<slugified-title>`), a pause for the user at every gate, commits of named files only with `(AB#<id>)`, and every push, pull request, hours or state change only after explicit approval. Never merge, never Closed. The flow is interactive by design: it stops in unattended runs.
+
+Install them in any repository, on a feature branch:
+
+```bash
+ai-readiness sdlc /path/to/repo            # preview
+ai-readiness sdlc /path/to/repo --apply    # create .claude/skills/*, never overwriting
+```
+
+Then, in Claude Code: `/sdlc 1234`.
 
 ## 4. CI checks
 
