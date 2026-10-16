@@ -177,6 +177,7 @@ public sealed class ScannerCli(IRepoOpener opener, TimeProvider clock, IAssets a
         }
 
         var installSkill = !repo.Files.FileExists(Remediation.Fixes.ReadinessSkillFix.Path);
+        var sessionId = Guid.NewGuid();
         if (dryRun)
         {
             if (installSkill)
@@ -185,7 +186,7 @@ public sealed class ScannerCli(IRepoOpener opener, TimeProvider clock, IAssets a
             }
 
             output.WriteLine($"Would run in {Path.GetFullPath(path)}:");
-            output.WriteLine(AgentCommand.Display());
+            output.WriteLine(AgentCommand.Display(sessionId));
             return Ok;
         }
 
@@ -204,13 +205,15 @@ public sealed class ScannerCli(IRepoOpener opener, TimeProvider clock, IAssets a
         var scanner = new ReadinessScanner(DefaultChecks);
         var before = scanner.Scan(repo.Files).Score;
         output.WriteLine($"Running the /ai-readiness skill in Claude Code on {repo.Name}. This can take a while and uses your Claude plan.");
-        var code = agent.Run(Path.GetFullPath(path), AgentCommand.Arguments);
+        var code = agent.Run(Path.GetFullPath(path), AgentCommand.Arguments(sessionId));
 
         var after = scanner.Scan(opener.Open(path).Files);
         output.WriteLine();
         output.WriteLine($"AI-readiness: {before}/{after.MaxScore} to {after.Score}/{after.MaxScore}");
         WriteHtml(new CliOptions(path, false, false, null, null, null), repo.Name, error, () => HtmlReport.Render(after, repo.Name, Today(), null));
-        output.WriteLine($"To answer its questions: cd \"{Path.GetFullPath(path)}\" && claude --continue");
+        output.WriteLine("To answer its questions, resume this exact run (claude --continue would open a different conversation):");
+        output.WriteLine($"  cd \"{Path.GetFullPath(path)}\"");
+        output.WriteLine($"  {AgentCommand.ResumeCommand(sessionId)}");
         return code == 0 ? Ok : AgentFailed;
     }
 

@@ -8,3 +8,5 @@
 \.(pfx|pem|key|bak|dump)$
 appsettings\.[^/]*\.Local\.json$
 (^|/)logs?/
+(^|/)\.git/config$
+(^|/)\.git-credentials$

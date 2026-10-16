@@ -16,7 +16,9 @@
       "Read(./**/*.dump)",
       "Edit(./.env)",
       "Edit(./**/.env)",
-      "Edit(./**/secrets/**)"
+      "Edit(./**/secrets/**)",
+      "Read(./.git/config)",
+      "Read(./**/.git-credentials)"
     ]
   },
   "hooks": {

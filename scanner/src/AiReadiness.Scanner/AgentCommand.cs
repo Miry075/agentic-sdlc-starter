@@ -24,15 +24,22 @@ public static class AgentCommand
         "Bash(bash scripts/check-docs-templates.sh *)",
     ];
 
-    public static IReadOnlyList<string> Arguments { get; } =
+    /// <summary>
+    /// The run gets a known session ID, because `claude --continue` skips `claude -p` sessions:
+    /// the only reliable way back into this run is `claude --resume <id>`.
+    /// </summary>
+    public static IReadOnlyList<string> Arguments(Guid sessionId) =>
     [
         "-p", Prompt,
+        "--session-id", sessionId.ToString(),
         "--permission-mode", "acceptEdits",
         "--allowedTools", string.Join(",", AllowedTools),
         "--permission-prompts", "none",
     ];
 
+    public static string ResumeCommand(Guid sessionId) => $"claude --resume {sessionId}";
+
     /// <summary>The command as you would type it, for --dry-run.</summary>
-    public static string Display() =>
-        "claude " + string.Join(" ", Arguments.Select(a => a.Any(c => char.IsWhiteSpace(c) || c is '*' or '(' or ')' or ',') ? $"'{a}'" : a));
+    public static string Display(Guid sessionId) =>
+        "claude " + string.Join(" ", Arguments(sessionId).Select(a => a.Any(c => char.IsWhiteSpace(c) || c is '*' or '(' or ')' or ',') ? $"'{a}'" : a));
 }
