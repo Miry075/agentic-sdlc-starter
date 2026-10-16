@@ -32,3 +32,7 @@ What this work item explicitly does **not** do, so agents don't expand the scope
 ## Related ADRs
 
 - [0001](../adr/0001-record-architecture-decisions.md)
+
+## Open questions
+
+- Questions for the product owner. Never guess an answer.

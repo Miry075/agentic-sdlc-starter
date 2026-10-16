@@ -116,6 +116,15 @@ An unattended run cannot ask you anything, so the skill ends with a numbered lis
 
 It never invents content, never touches application code, never pushes or merges. Evaluation questions stay out until you confirm them, and specs need real work items: read from Azure DevOps or Jira when such a tool is connected, otherwise from your answers. So the last points always need you. The source is `templates/claude/skills/ai-readiness/SKILL.md`.
 
+## SDLC phase skills: `ai-readiness sdlc`
+
+```bash
+ai-readiness sdlc /path/to/repo            # preview, writes nothing
+ai-readiness sdlc /path/to/repo --apply    # create the missing skills
+```
+
+Installs `/sdlc`, `/requirements-phase`, `/design-phase`, `/build-phase`, `/test-phase` and `/release-phase` into `.claude/skills/`, from `templates/claude/skills/` (compiled into the tool). Existing skills are never overwritten. `--apply` refuses to run on the default branch: create a feature branch first, then commit and open a pull request. What each phase does: [docs/CAPABILITIES.md](../docs/CAPABILITIES.md#the-sdlc-with-the-phase-skills).
+
 ## Shareable HTML report
 
 At a terminal, every scan writes the HTML report to a temporary file and opens it in your default browser, next to the markdown summary. You do not pass any option or file name. Add `--no-open` to skip the browser, `--html` to write the report even when nothing would open (piped output, CI), or `--out file.html` to choose where it is written. Nothing opens when the output is piped or redirected, when `--json` is used, or in CI (`CI`, `TF_BUILD` or `GITHUB_ACTIONS` set). If the browser cannot be started, the scan still succeeds and prints the file path. `--fix` never opens a browser.

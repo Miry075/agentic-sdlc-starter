@@ -50,9 +50,35 @@ Copy into each product repository (`templates/repo/`) or wiki (`templates/wiki/`
 | `project-settings.json` | The same deny rules and hook for one repository (`.claude/settings.json`). |
 | `hooks/block-classified.sh` | `PreToolUse` hook: blocks Read, Edit, Write, Grep and Glob on paths matching `classified-paths.txt`. Needs `jq`. |
 | `classified-paths.txt` | The blocked path patterns, one extended regex per line. |
-| `skills/requirements-phase` | Turns a New work item into a committed spec with testable acceptance criteria, through the gateway. |
-| `skills/build-phase` | Implements an approved spec: reads AGENTS.md, the spec, ADRs and glossary first; one test per acceptance criterion. |
+| `skills/sdlc` | `/sdlc <id>`: finds where a work item stands and runs the next phase. |
+| `skills/requirements-phase` | Work item to a committed spec with Given/When/Then acceptance criteria, edge cases, non-goals, risk tier and open questions. Spec PR before any code. |
+| `skills/design-phase` | Approved spec to a `## Design` section (components, contracts, test plan per criterion, risks), plus a Proposed ADR for structural decisions. |
+| `skills/build-phase` | Implements the design: one test per acceptance criterion, glossary names, full test suite green, AGENTS.md updated if the structure changed. |
+| `skills/test-phase` | Every criterion and edge case has a passing test; adds missing tests only, never fixes production code; records a `## Verification` table. |
+| `skills/release-phase` | Release notes, migration/configuration/feature-flag checklist, rollback plan and blockers in `docs/releases/<version>.md`. Never deploys or tags. |
 | `skills/ai-readiness` | Raises a repository's AI-readiness score without inventing content (see the scanner). |
+
+### The SDLC with the phase skills
+
+```mermaid
+flowchart LR
+  WI[Work item] --> R["/requirements-phase<br/>docs/specs/id.md"]
+  R -- spec PR merged --> D["/design-phase<br/>## Design, Proposed ADR"]
+  D --> B["/build-phase<br/>code + one test per criterion"]
+  B --> T["/test-phase<br/>## Verification"]
+  T -- feature PR merged --> REL["/release-phase<br/>docs/releases/version.md"]
+```
+
+Every phase works on a feature branch (`feature/<id>-spec`, then `feature/<id>-<slug>`), never commits on the default branch, starts commits with `#<id>` so the tracker links them, and ends by printing the pull request and the state change to make; it never pushes, merges, opens the PR or changes the work item itself. With the knowledge gateway each phase passes its `phase`, so the policy limits what it can read; without it, the skills read the same files locally.
+
+Install them in any repository, on a feature branch:
+
+```bash
+ai-readiness sdlc /path/to/repo            # preview
+ai-readiness sdlc /path/to/repo --apply    # create .claude/skills/*, never overwriting
+```
+
+Then, in Claude Code: `/sdlc 1234`.
 
 ## 4. CI checks
 

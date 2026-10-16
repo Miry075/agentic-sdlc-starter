@@ -18,6 +18,9 @@ public sealed class ScannerCli(IRepoOpener opener, TimeProvider clock, IAssets a
     private const string Usage = """
         Usage: ai-readiness [path] [options]
                ai-readiness agent [path] [--dry-run]
+               ai-readiness sdlc [path] [--apply]
+
+          sdlc              install the SDLC phase skills (/sdlc, /requirements-phase ... /release-phase); --apply writes them
 
           agent             run the /ai-readiness skill unattended in Claude Code (uses your Claude login)
 
@@ -69,6 +72,11 @@ public sealed class ScannerCli(IRepoOpener opener, TimeProvider clock, IAssets a
         if (args.Length > 0 && args[0] == "agent")
         {
             return RunAgent(args[1..], output, error);
+        }
+
+        if (args.Length > 0 && args[0] == "sdlc")
+        {
+            return RunSdlc(args[1..], output, error);
         }
 
         if (!CliOptions.TryParse(args, out var options, out var problem))
@@ -287,6 +295,91 @@ public sealed class ScannerCli(IRepoOpener opener, TimeProvider clock, IAssets a
         output.WriteLine($"  cd \"{root}\"");
         output.WriteLine($"  {AgentCommand.ResumeCommand(sessionId)}");
         return policyKept ? Ok : BranchPolicyViolated;
+    }
+
+    private int RunSdlc(string[] args, TextWriter output, TextWriter error)
+    {
+        var path = ".";
+        var apply = false;
+        foreach (var arg in args)
+        {
+            if (arg == "--apply")
+            {
+                apply = true;
+            }
+            else if (arg.StartsWith("--", StringComparison.Ordinal))
+            {
+                error.WriteLine($"Unknown option {arg} for sdlc.{Environment.NewLine}{Usage}");
+                return UsageError;
+            }
+            else if (path != ".")
+            {
+                error.WriteLine($"Give one repository path, not two ('{path}' and '{arg}').");
+                return UsageError;
+            }
+            else
+            {
+                path = arg;
+            }
+        }
+
+        RepoEntry repo;
+        try
+        {
+            repo = opener.Open(path);
+        }
+        catch (DirectoryNotFoundException ex)
+        {
+            error.WriteLine(ex.Message);
+            return UsageError;
+        }
+
+        var missing = SdlcSkills.Names.Where(n => !repo.Files.FileExists(SdlcSkills.RepoPath(n))).ToList();
+        output.WriteLine($"# SDLC skills for `{repo.Name}`");
+        output.WriteLine();
+        foreach (var name in SdlcSkills.Names)
+        {
+            output.WriteLine(missing.Contains(name)
+                ? $"- {(apply ? "create" : "will create")} `{SdlcSkills.RepoPath(name)}` (/{name})"
+                : $"- keep `{SdlcSkills.RepoPath(name)}` (already there, never overwritten)");
+        }
+
+        output.WriteLine();
+        if (missing.Count == 0)
+        {
+            output.WriteLine("Nothing to install.");
+            return Ok;
+        }
+
+        if (!apply)
+        {
+            output.WriteLine("Nothing has been written. Run again with `--apply`, on a feature branch.");
+            return Ok;
+        }
+
+        var root = Path.GetFullPath(path);
+        if (git is not null && git.DefaultBranch(root) is { } defaultBranch && git.CurrentBranch(root) == defaultBranch)
+        {
+            error.WriteLine($"You are on {defaultBranch}. Create a feature branch first, then run this again:");
+            error.WriteLine($"  git switch -c feature/sdlc-skills {defaultBranch}");
+            return UsageError;
+        }
+
+        try
+        {
+            opener.OpenWriter(path).CreateAll(missing.Select(n => new FileChange(SdlcSkills.RepoPath(n), assets.Read(SdlcSkills.AssetName(n)))).ToList());
+        }
+        catch (FixConflictException ex)
+        {
+            error.WriteLine(ex.Message);
+            return CouldNotApply;
+        }
+
+        output.WriteLine("Installed. Next:");
+        output.WriteLine("  git add .claude/skills && git commit -m \"Add SDLC phase skills\"");
+        output.WriteLine("  push the branch and open a pull request");
+        output.WriteLine("Then, in Claude Code: /sdlc <work item id> runs the next phase for that work item.");
+        return Ok;
     }
 
     private string FeatureBranchName(string root, IGit git)
