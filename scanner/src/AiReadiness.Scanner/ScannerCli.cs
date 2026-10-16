@@ -6,13 +6,14 @@ using AiReadiness.Scanner.Reporting;
 
 namespace AiReadiness.Scanner;
 
-public sealed class ScannerCli(IRepoOpener opener, TimeProvider clock, IAssets assets, IBrowserLauncher? browser = null, IAgentRunner? agent = null)
+public sealed class ScannerCli(IRepoOpener opener, TimeProvider clock, IAssets assets, IBrowserLauncher? browser = null, IAgentRunner? agent = null, IGit? git = null)
 {
     public const int Ok = 0;
     public const int BelowMinimum = 1;
     public const int UsageError = 2;
     public const int CouldNotApply = 3;
     public const int AgentFailed = 4;
+    public const int BranchPolicyViolated = 5;
 
     private const string Usage = """
         Usage: ai-readiness [path] [options]
@@ -176,17 +177,32 @@ public sealed class ScannerCli(IRepoOpener opener, TimeProvider clock, IAssets a
             return UsageError;
         }
 
+        var root = Path.GetFullPath(path);
+        if (git is null)
+        {
+            error.WriteLine("Git is not available.");
+            return UsageError;
+        }
+
+        if (git.DefaultBranch(root) is not { } defaultBranch)
+        {
+            error.WriteLine("Could not find the default branch (origin/HEAD, main or master). Create it or run `git remote set-head origin --auto`.");
+            return UsageError;
+        }
+
+        var featureBranch = FeatureBranchName(root, git);
         var installSkill = !repo.Files.FileExists(Remediation.Fixes.ReadinessSkillFix.Path);
         var sessionId = Guid.NewGuid();
         if (dryRun)
         {
+            output.WriteLine($"Would create {featureBranch} from {defaultBranch} and switch to it.");
             if (installSkill)
             {
-                output.WriteLine($"Would install {Remediation.Fixes.ReadinessSkillFix.Path}.");
+                output.WriteLine($"Would install {Remediation.Fixes.ReadinessSkillFix.Path} on that branch.");
             }
 
-            output.WriteLine($"Would run in {Path.GetFullPath(path)}:");
-            output.WriteLine(AgentCommand.Display(sessionId));
+            output.WriteLine($"Would run in {root}:");
+            output.WriteLine(AgentCommand.Display(sessionId, featureBranch));
             return Ok;
         }
 
@@ -196,10 +212,31 @@ public sealed class ScannerCli(IRepoOpener opener, TimeProvider clock, IAssets a
             return UsageError;
         }
 
+        if (!git.IsClean(root))
+        {
+            error.WriteLine("The repository has uncommitted changes. Commit or stash them first, so they do not end up in the AI-readiness branch.");
+            return UsageError;
+        }
+
+        var defaultTip = git.Tip(root, defaultBranch);
+        if (!git.CreateAndSwitch(root, featureBranch, defaultBranch))
+        {
+            error.WriteLine($"Could not create {featureBranch} from {defaultBranch}.");
+            return UsageError;
+        }
+
+        output.WriteLine($"Created {featureBranch} from {defaultBranch}. Every change goes there; {defaultBranch} only changes through your pull request.");
+
         if (installSkill)
         {
             opener.OpenWriter(path).CreateAll([new FileChange(Remediation.Fixes.ReadinessSkillFix.Path, assets.Read(AssetNames.ReadinessSkill))]);
-            output.WriteLine($"Installed {Remediation.Fixes.ReadinessSkillFix.Path}.");
+            if (!git.CommitFile(root, Remediation.Fixes.ReadinessSkillFix.Path, "AI-readiness: install the /ai-readiness skill"))
+            {
+                error.WriteLine($"Installed {Remediation.Fixes.ReadinessSkillFix.Path} but could not commit it. Commit it on {featureBranch}, then run this again.");
+                return UsageError;
+            }
+
+            output.WriteLine($"Installed and committed {Remediation.Fixes.ReadinessSkillFix.Path} on {featureBranch}.");
         }
 
         var scanner = new ReadinessScanner(DefaultChecks);
@@ -207,7 +244,7 @@ public sealed class ScannerCli(IRepoOpener opener, TimeProvider clock, IAssets a
         output.WriteLine($"Running the /ai-readiness skill in Claude Code on {repo.Name}. This can take a while and uses your Claude plan.");
         output.WriteLine($"Session {sessionId}. Each step is logged below.");
         output.WriteLine();
-        var code = agent.Run(Path.GetFullPath(path), AgentCommand.Arguments(sessionId), line =>
+        var code = agent.Run(root, AgentCommand.Arguments(sessionId, featureBranch), line =>
         {
             var stamp = clock.GetLocalNow().ToString("HH:mm:ss");
             foreach (var entry in AgentProgress.Describe(line))
@@ -217,6 +254,12 @@ public sealed class ScannerCli(IRepoOpener opener, TimeProvider clock, IAssets a
 
             output.Flush();
         });
+
+        var policyKept = git.Tip(root, defaultBranch) == defaultTip && git.CurrentBranch(root) == featureBranch;
+        if (!policyKept)
+        {
+            error.WriteLine($"Branch policy broken: {defaultBranch} moved or the run left {featureBranch}. Check `git log --oneline -5 {defaultBranch}` before doing anything else.");
+        }
 
         if (code != 0)
         {
@@ -228,10 +271,34 @@ public sealed class ScannerCli(IRepoOpener opener, TimeProvider clock, IAssets a
         output.WriteLine();
         output.WriteLine($"AI-readiness: {before}/{after.MaxScore} to {after.Score}/{after.MaxScore}");
         WriteHtml(new CliOptions(path, false, false, null, null, null), repo.Name, error, () => HtmlReport.Render(after, repo.Name, Today(), null));
+        output.WriteLine();
+        output.WriteLine($"Review the branch, then send it as a pull request into {defaultBranch}:");
+        output.WriteLine($"  git log --oneline {defaultBranch}..{featureBranch}");
+        output.WriteLine($"  git push -u origin {featureBranch}");
+        output.WriteLine(git.Host(root) switch
+        {
+            "azure" => $"  az repos pr create --source-branch {featureBranch} --target-branch {defaultBranch} --title \"AI-readiness: {before} to {after.Score}\"",
+            "github" => $"  gh pr create --base {defaultBranch} --head {featureBranch} --title \"AI-readiness: {before} to {after.Score}\" --fill",
+            _ => "  then open the pull request on your Git server.",
+        });
+        output.WriteLine("The full pull request description is at the end of the log above.");
+        output.WriteLine();
         output.WriteLine("To answer its questions, resume this exact run (claude --continue would open a different conversation):");
-        output.WriteLine($"  cd \"{Path.GetFullPath(path)}\"");
+        output.WriteLine($"  cd \"{root}\"");
         output.WriteLine($"  {AgentCommand.ResumeCommand(sessionId)}");
-        return Ok;
+        return policyKept ? Ok : BranchPolicyViolated;
+    }
+
+    private string FeatureBranchName(string root, IGit git)
+    {
+        var name = $"feature/ai-readiness-{clock.GetLocalNow():yyyy-MM-dd}";
+        var candidate = name;
+        for (var i = 2; git.BranchExists(root, candidate); i++)
+        {
+            candidate = $"{name}-{i}";
+        }
+
+        return candidate;
     }
 
     private int RunAll(CliOptions options, TextWriter output, TextWriter error)

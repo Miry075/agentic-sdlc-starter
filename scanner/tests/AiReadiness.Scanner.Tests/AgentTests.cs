@@ -23,15 +23,48 @@ internal sealed class FakeAgent(bool available = true, int exitCode = 0, Action<
     }
 }
 
+internal sealed class FakeGit : IGit
+{
+    public bool Clean { get; set; } = true;
+    public string? Default { get; set; } = "main";
+    public string Current { get; set; } = "main";
+    public HashSet<string> Branches { get; } = ["main"];
+    public Dictionary<string, string> Tips { get; } = new() { ["main"] = "abc123" };
+    public List<string> Commits { get; } = [];
+    public string? HostName { get; set; } = "azure";
+    public bool CommitWorks { get; set; } = true;
+
+    public bool IsClean(string repo) => Clean;
+    public string? CurrentBranch(string repo) => Current;
+    public string? DefaultBranch(string repo) => Default;
+    public bool BranchExists(string repo, string branch) => Branches.Contains(branch);
+    public string? Tip(string repo, string branch) => Tips.GetValueOrDefault(branch);
+    public string? Host(string repo) => HostName;
+
+    public bool CreateAndSwitch(string repo, string branch, string from)
+    {
+        Branches.Add(branch);
+        Tips[branch] = Tips.GetValueOrDefault(from) ?? "";
+        Current = branch;
+        return true;
+    }
+
+    public bool CommitFile(string repo, string path, string message)
+    {
+        Commits.Add($"{Current}:{path}");
+        return CommitWorks;
+    }
+}
+
 public class AgentCommandTests
 {
     [Fact]
     public void Arguments_RunTheSkillUnattendedWithOurLoginAndNoPrompts()
     {
         var id = Guid.NewGuid();
-        var args = AgentCommand.Arguments(id);
+        var args = AgentCommand.Arguments(id, "feature/ai-readiness-2026-10-16");
 
-        Assert.Equal(["-p", "/ai-readiness unattended", "--session-id", id.ToString()], args.Take(4));
+        Assert.Equal(["-p", "/ai-readiness unattended branch=feature/ai-readiness-2026-10-16", "--session-id", id.ToString()], args.Take(4));
         Assert.Contains("acceptEdits", args);
         Assert.DoesNotContain("--permission-prompts", args);
         Assert.Contains("stream-json", args);
@@ -43,15 +76,17 @@ public class AgentCommandTests
     public void AllowedTools_NeverIncludePushOrUnrestrictedShell()
     {
         Assert.DoesNotContain(AgentCommand.AllowedTools, t => t.Contains("push", StringComparison.Ordinal));
+        Assert.DoesNotContain(AgentCommand.AllowedTools, t => t.Contains("switch", StringComparison.Ordinal) || t.Contains("checkout", StringComparison.Ordinal) || t.Contains("reset", StringComparison.Ordinal) || t.Contains("merge", StringComparison.Ordinal));
+        Assert.DoesNotContain("Bash(git branch *)", AgentCommand.AllowedTools);
         Assert.DoesNotContain(AgentCommand.AllowedTools, t => t is "Bash" or "Bash(*)" or "Bash(git *)");
     }
 
     [Fact]
     public void Display_QuotesArgumentsAShellWouldSplit()
     {
-        var display = AgentCommand.Display(Guid.NewGuid());
+        var display = AgentCommand.Display(Guid.NewGuid(), "feature/x");
 
-        Assert.Contains("'/ai-readiness unattended'", display);
+        Assert.Contains("'/ai-readiness unattended branch=feature/x'", display);
         Assert.StartsWith("claude -p ", display);
     }
 }
@@ -60,11 +95,14 @@ public class ScannerAgentTests
 {
     private static readonly TimeProvider Clock = new FixedClock(new DateTimeOffset(2026, 10, 16, 8, 0, 0, TimeSpan.Zero));
 
-    private static (int Code, string Out, string Err) Run(FakeRepo repo, FakeAgent? agent, params string[] args)
+    private static (int Code, string Out, string Err) Run(FakeRepo repo, FakeAgent? agent, params string[] args) =>
+        RunWith(repo, agent, new FakeGit(), args);
+
+    private static (int Code, string Out, string Err) RunWith(FakeRepo repo, FakeAgent? agent, FakeGit git, params string[] args)
     {
         var output = new StringWriter();
         var error = new StringWriter();
-        var code = new ScannerCli(new FakeOpener(("repo", repo)), Clock, new EmbeddedAssets(), browser: null, agent).Run(["agent", .. args], output, error);
+        var code = new ScannerCli(new FakeOpener(("repo", repo)), Clock, new EmbeddedAssets(), browser: null, agent, git).Run(["agent", .. args], output, error);
         return (code, output.ToString(), error.ToString());
     }
 
@@ -103,7 +141,8 @@ public class ScannerAgentTests
         var (code, output, _) = Run(repo, agent, "--dry-run");
 
         Assert.Equal(ScannerCli.Ok, code);
-        Assert.Contains("claude -p '/ai-readiness unattended' --session-id ", output);
+        Assert.Contains("claude -p '/ai-readiness unattended branch=feature/ai-readiness-2026-10-16' --session-id ", output);
+        Assert.Contains("Would create feature/ai-readiness-2026-10-16 from main", output);
         Assert.Contains("Would install", output);
         Assert.Empty(agent.Runs);
         Assert.False(repo.FileExists(ReadinessSkillFix.Path));
@@ -121,7 +160,7 @@ public class ScannerAgentTests
         Assert.True(repo.FileExists(ReadinessSkillFix.Path));
         var arguments = Assert.Single(agent.Runs).Arguments;
         var sessionId = Guid.Parse(arguments[arguments.ToList().IndexOf("--session-id") + 1]);
-        Assert.Equal(AgentCommand.Arguments(sessionId), arguments);
+        Assert.Equal(AgentCommand.Arguments(sessionId, "feature/ai-readiness-2026-10-16"), arguments);
         Assert.Contains("AI-readiness: 14/100 to 34/100", output);
         Assert.Contains($"claude --resume {sessionId}", output);
     }
@@ -170,6 +209,91 @@ public class ScannerAgentTests
 
         Assert.Contains("write  AGENTS.md", output);
         Assert.Matches(new System.Text.RegularExpressions.Regex(@"\[\d\d:\d\d:\d\d\] write  AGENTS\.md"), output);
+    }
+
+    [Fact]
+    public void Agent_CreatesTheFeatureBranchFromTheDefaultBranchAndCommitsTheSkillThere()
+    {
+        var git = new FakeGit { Current = "feature/my-work" };
+
+        var (code, output, _) = RunWith(GitRepo(), new FakeAgent(), git);
+
+        Assert.Equal(ScannerCli.Ok, code);
+        Assert.Equal("feature/ai-readiness-2026-10-16", git.Current);
+        Assert.Equal(["feature/ai-readiness-2026-10-16:.claude/skills/ai-readiness/SKILL.md"], git.Commits);
+        Assert.Contains("git push -u origin feature/ai-readiness-2026-10-16", output);
+        Assert.Contains("az repos pr create --source-branch feature/ai-readiness-2026-10-16 --target-branch main", output);
+    }
+
+    [Fact]
+    public void Agent_WhenTheBranchNameIsTaken_AddsASuffix()
+    {
+        var git = new FakeGit();
+        git.Branches.Add("feature/ai-readiness-2026-10-16");
+
+        RunWith(GitRepo(), new FakeAgent(), git);
+
+        Assert.Equal("feature/ai-readiness-2026-10-16-2", git.Current);
+    }
+
+    [Fact]
+    public void Agent_WithUncommittedChanges_RefusesAndTouchesNothing()
+    {
+        var git = new FakeGit { Clean = false };
+        var agent = new FakeAgent();
+
+        var (code, _, error) = RunWith(GitRepo(), agent, git);
+
+        Assert.Equal(ScannerCli.UsageError, code);
+        Assert.Contains("uncommitted changes", error);
+        Assert.Empty(agent.Runs);
+        Assert.Equal("main", git.Current);
+    }
+
+    [Fact]
+    public void Agent_WithoutADefaultBranch_Refuses()
+    {
+        Assert.Equal(ScannerCli.UsageError, RunWith(GitRepo(), new FakeAgent(), new FakeGit { Default = null }).Code);
+    }
+
+    [Fact]
+    public void Agent_WhenTheDefaultBranchMovesDuringTheRun_ReportsABranchPolicyViolation()
+    {
+        var git = new FakeGit();
+        var agent = new FakeAgent(onRun: _ => git.Tips["main"] = "changed");
+
+        var (code, _, error) = RunWith(GitRepo(), agent, git);
+
+        Assert.Equal(ScannerCli.BranchPolicyViolated, code);
+        Assert.Contains("Branch policy broken", error);
+    }
+
+    [Fact]
+    public void Agent_WhenTheRunLeavesTheFeatureBranch_ReportsABranchPolicyViolation()
+    {
+        var git = new FakeGit();
+        var agent = new FakeAgent(onRun: _ => git.Current = "main");
+
+        Assert.Equal(ScannerCli.BranchPolicyViolated, RunWith(GitRepo(), agent, git).Code);
+    }
+
+    [Fact]
+    public void Agent_OnGitHub_SuggestsGhPrCreate()
+    {
+        var (_, output, _) = RunWith(GitRepo(), new FakeAgent(), new FakeGit { HostName = "github" });
+
+        Assert.Contains("gh pr create --base main --head feature/ai-readiness-2026-10-16", output);
+    }
+
+    [Fact]
+    public void Agent_WhenTheSkillCannotBeCommitted_StopsBeforeRunningClaude()
+    {
+        var agent = new FakeAgent();
+
+        var (code, _, _) = RunWith(GitRepo(), agent, new FakeGit { CommitWorks = false });
+
+        Assert.Equal(ScannerCli.UsageError, code);
+        Assert.Empty(agent.Runs);
     }
 }
 

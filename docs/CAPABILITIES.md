@@ -179,8 +179,8 @@ ai-readiness <repo> --fix --apply   # create the files
 
 ### Let Claude Code do the rest
 
-- **In Claude Code:** type `/ai-readiness` in the repository. The skill works on a branch, applies the safe fixes, does the guided steps largest gain first, asks you every open question at once, re-scans until the score stops rising, and opens the report.
-- **From the terminal:** `ai-readiness agent <repo>` runs the same skill unattended with your Claude login (`--dry-run` shows the command). Minimum permissions: file edits, the scanner, `dotnet build`/`test`, the template check and local Git commands. No push. It logs every step live (messages, files read and written, commands, refusals), ends with the questions to answer, prints the score before and after, and the exact `claude --resume <id>` command to answer them in that same run.
+- **In Claude Code:** type `/ai-readiness` in the repository. The skill works on a feature branch `feature/ai-readiness-<date>` created from the default branch, never commits anywhere else, applies the safe fixes, does the guided steps largest gain first, asks you every open question at once, re-scans until the score stops rising, and opens the report.
+- **From the terminal:** `ai-readiness agent <repo>` creates the feature branch itself (refusing a dirty working tree), then runs the same skill unattended with your Claude login (`--dry-run` shows the command). Minimum permissions: file edits, the scanner, `dotnet build`/`test`, the template check and local Git commands. No push. It logs every step live (messages, files read and written, commands, refusals), ends with the questions to answer, prints the score before and after, the push and pull request commands, and the exact `claude --resume <id>` command to answer them in that same run.
 
 The last points always need you: real glossary meanings, confirmed evaluation questions and real work items cannot be read from code, and the skill never makes them up.
 
@@ -199,9 +199,10 @@ Runs on macOS, Linux and Windows with the .NET 10 SDK.
 |---|---|
 | 0 | OK |
 | 1 | A score is below `--min-score` |
-| 2 | Bad arguments, folder not found, not a Git repository (agent), or Claude Code missing |
+| 2 | Bad arguments, folder not found, not a Git repository, uncommitted changes or no default branch (agent), or Claude Code missing |
 | 3 | Fixes could not be applied (a target file already exists); nothing was written |
 | 4 | The Claude Code run failed |
+| 5 | The agent run broke the branch policy (the default branch moved, or the run left the feature branch) |
 
 ---
 

@@ -87,7 +87,7 @@ Safety rules:
 - `.claude/hooks/block-classified.sh` needs `jq` on each developer machine.
 - The CI checks fail pull requests that change the project structure without updating `AGENTS.md`. That is their purpose, but tell your team first.
 
-Exit codes: `0` ok, `1` below `--min-score`, `2` bad arguments or folder not found, `3` could not apply, `4` the agent run failed.
+Exit codes: `0` ok, `1` below `--min-score`, `2` bad arguments, folder not found, uncommitted changes or missing tools, `3` could not apply, `4` the agent run failed, `5` the branch policy was broken.
 
 `--fix --json` (and `--fix --apply --json`) prints the plan as JSON: scores, files, notes, and each guided step with its `prompt` and `criteria`. That is what the skill reads.
 
@@ -95,7 +95,7 @@ Exit codes: `0` ok, `1` below `--min-score`, `2` bad arguments or folder not fou
 
 `--fix --apply` installs a Claude Code skill in the repository. In Claude Code, in that repository, type `/ai-readiness`. It:
 
-1. checks that the scanner is installed and the Git tree is clean, and creates a branch `ai-readiness/<date>`;
+1. checks that the scanner is installed and the Git tree is clean, and creates a feature branch `feature/ai-readiness-<date>` from the default branch;
 2. applies the safe fixes and commits them;
 3. works through the guided steps, largest gain first, following each prompt, re-running `--fix --apply` when a step unlocks new fixes (CLAUDE.md and the CI checks need AGENTS.md first), with one commit per area;
 4. collects every `TODO(human)` question and asks them all at once, then fills in your answers;
@@ -108,9 +108,11 @@ ai-readiness agent /path/to/repo --dry-run   # show the Claude Code command, cha
 ai-readiness agent /path/to/repo             # run it
 ```
 
-It checks that the folder is a Git repository and that Claude Code (`claude`) is installed, installs the skill if it is missing, then runs `claude -p "/ai-readiness unattended"` in the repository with your Claude login (your Pro or Max plan; each run counts toward its limits). Permissions are the minimum the skill needs: file edits, the scanner, `dotnet build`, `dotnet test`, `scripts/check-docs-templates.sh`, and local Git commands (status, switch, add, commit, log, branch, diff). No `git push`, no other shell commands; in an unattended run anything else is refused, since nobody can approve it. While it runs, every step is logged live with a timestamp: what Claude says, each file it reads or writes, each command it runs, anything refused, and the final summary. When it finishes, it prints the score before and after and opens the HTML report.
+It checks that the folder is a Git repository with no uncommitted changes and that Claude Code (`claude`) is installed. It creates `feature/ai-readiness-<date>` from the default branch (`origin/HEAD`, else `main` or `master`) and switches to it, installs and commits the skill there if it is missing, then runs `claude -p "/ai-readiness unattended"` in the repository with your Claude login (your Pro or Max plan; each run counts toward its limits). Permissions are the minimum the skill needs: file edits, the scanner, `dotnet build`, `dotnet test`, `scripts/check-docs-templates.sh`, and local Git commands (status, switch, add, commit, log, branch, diff). No `git push`, no other shell commands; in an unattended run anything else is refused, since nobody can approve it. While it runs, every step is logged live with a timestamp: what Claude says, each file it reads or writes, each command it runs, anything refused, and the final summary. When it finishes, it prints the score before and after and opens the HTML report.
 
 An unattended run cannot ask you anything, so the skill ends with a numbered list of questions. The run gets its own session ID, and the command prints `claude --resume <id>` at the end: use it to answer them, or `claude -p 'Answers: 1. ... 2. ...' --resume <id>`. Do not use `claude --continue`: it skips `claude -p` runs and reopens your last interactive conversation instead. Exit code `4` means Claude Code itself failed.
+
+**Branch policy.** Every change lands on the feature branch and reaches the default branch only through a pull request you open and merge. Claude Code gets no command that switches, creates, resets or deletes branches, and the run is checked afterwards: if the default branch moved or the run left the feature branch, the command says so and exits with code `5`. At the end it prints the review, push and pull request commands (`az repos pr create` for Azure DevOps, `gh pr create` for GitHub), and the skill prints a ready-to-paste pull request description.
 
 It never invents content, never touches application code, never pushes or merges. Evaluation questions stay out until you confirm them, and specs need real work items: read from Azure DevOps or Jira when such a tool is connected, otherwise from your answers. So the last points always need you. The source is `templates/claude/skills/ai-readiness/SKILL.md`.
 
