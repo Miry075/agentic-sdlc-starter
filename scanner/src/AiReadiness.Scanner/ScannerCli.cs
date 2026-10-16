@@ -6,15 +6,19 @@ using AiReadiness.Scanner.Reporting;
 
 namespace AiReadiness.Scanner;
 
-public sealed class ScannerCli(IRepoOpener opener, TimeProvider clock, IAssets assets, IBrowserLauncher? browser = null)
+public sealed class ScannerCli(IRepoOpener opener, TimeProvider clock, IAssets assets, IBrowserLauncher? browser = null, IAgentRunner? agent = null)
 {
     public const int Ok = 0;
     public const int BelowMinimum = 1;
     public const int UsageError = 2;
     public const int CouldNotApply = 3;
+    public const int AgentFailed = 4;
 
     private const string Usage = """
         Usage: ai-readiness [path] [options]
+               ai-readiness agent [path] [--dry-run]
+
+          agent             run the /ai-readiness skill unattended in Claude Code (uses your Claude login)
 
           path              repository folder, relative or absolute (default: current folder)
           --all             treat path as a folder of repositories and rank them all
@@ -47,6 +51,11 @@ public sealed class ScannerCli(IRepoOpener opener, TimeProvider clock, IAssets a
         {
             output.WriteLine(Usage);
             return Ok;
+        }
+
+        if (args.Length > 0 && args[0] == "agent")
+        {
+            return RunAgent(args[1..], output, error);
         }
 
         if (!CliOptions.TryParse(args, out var options, out var problem))
@@ -110,6 +119,82 @@ public sealed class ScannerCli(IRepoOpener opener, TimeProvider clock, IAssets a
             ? JsonReport.RenderPlan(plan, repo.Name, after.Score)
             : FixPlanReport.RenderApplied(plan, repo.Name, after.Score, after.MaxScore));
         return Ok;
+    }
+
+    private int RunAgent(string[] args, TextWriter output, TextWriter error)
+    {
+        var path = ".";
+        var dryRun = false;
+        foreach (var arg in args)
+        {
+            if (arg == "--dry-run")
+            {
+                dryRun = true;
+            }
+            else if (arg.StartsWith("--", StringComparison.Ordinal))
+            {
+                error.WriteLine($"Unknown option {arg} for agent.{Environment.NewLine}{Usage}");
+                return UsageError;
+            }
+            else
+            {
+                path = arg;
+            }
+        }
+
+        RepoEntry repo;
+        try
+        {
+            repo = opener.Open(path);
+        }
+        catch (DirectoryNotFoundException ex)
+        {
+            error.WriteLine(ex.Message);
+            return UsageError;
+        }
+
+        if (!repo.Files.DirectoryExists(".git") && !repo.Files.FileExists(".git"))
+        {
+            error.WriteLine("The agent works on a branch, so the folder must be a Git repository.");
+            return UsageError;
+        }
+
+        var installSkill = !repo.Files.FileExists(Remediation.Fixes.ReadinessSkillFix.Path);
+        if (dryRun)
+        {
+            if (installSkill)
+            {
+                output.WriteLine($"Would install {Remediation.Fixes.ReadinessSkillFix.Path}.");
+            }
+
+            output.WriteLine($"Would run in {Path.GetFullPath(path)}:");
+            output.WriteLine(AgentCommand.Display());
+            return Ok;
+        }
+
+        if (agent is null || !agent.IsAvailable())
+        {
+            error.WriteLine("Claude Code (`claude`) is not installed or not on PATH. Install it from https://code.claude.com and log in once with `claude`.");
+            return UsageError;
+        }
+
+        if (installSkill)
+        {
+            opener.OpenWriter(path).CreateAll([new FileChange(Remediation.Fixes.ReadinessSkillFix.Path, assets.Read(AssetNames.ReadinessSkill))]);
+            output.WriteLine($"Installed {Remediation.Fixes.ReadinessSkillFix.Path}.");
+        }
+
+        var scanner = new ReadinessScanner(DefaultChecks);
+        var before = scanner.Scan(repo.Files).Score;
+        output.WriteLine($"Running the /ai-readiness skill in Claude Code on {repo.Name}. This can take a while and uses your Claude plan.");
+        var code = agent.Run(Path.GetFullPath(path), AgentCommand.Arguments);
+
+        var after = scanner.Scan(opener.Open(path).Files);
+        output.WriteLine();
+        output.WriteLine($"AI-readiness: {before}/{after.MaxScore} to {after.Score}/{after.MaxScore}");
+        WriteHtml(new CliOptions(path, false, false, null, null, null), repo.Name, error, () => HtmlReport.Render(after, repo.Name, Today(), null));
+        output.WriteLine($"To answer its questions: cd \"{Path.GetFullPath(path)}\" && claude --continue");
+        return code == 0 ? Ok : AgentFailed;
     }
 
     private int RunAll(CliOptions options, TextWriter output, TextWriter error)

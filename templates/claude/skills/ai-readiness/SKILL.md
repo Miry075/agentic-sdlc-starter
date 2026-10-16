@@ -44,7 +44,12 @@ You prepare this repository for AI coding agents, guided by the `ai-readiness` s
 
 ## 4. Ask the user once
 
-Collect every `TODO(human)` you wrote into one numbered list, grouped by file. Ask them all in one message. When the user answers, replace each TODO with the answer, keep the unanswered ones, and commit.
+Collect every `TODO(human)` you wrote into one numbered list, grouped by file, and add the evaluation questions waiting for confirmation.
+
+- **Interactive session:** ask them all in one message and wait.
+- **Unattended run** (invoked as `/ai-readiness unattended`, started with `claude -p`, or no way to ask the user): do not wait and do not stop early. Finish every step you can, then end your final message with the numbered list under the heading `Questions for you`, followed by: "Answer in this conversation with `claude --continue`, or in one line with `claude -p 'Answers: 1. ... 2. ...' --continue`."
+
+When the answers arrive (in this session or a continued one), replace each TODO with its answer, keep the unanswered ones, commit, then run `ai-readiness . --fix --apply --json` and re-scan.
 
 ## 5. Stop and report
 
