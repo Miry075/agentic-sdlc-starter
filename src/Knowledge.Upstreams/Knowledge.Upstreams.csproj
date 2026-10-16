@@ -2,7 +2,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Knowledge.Core\Knowledge.Core.csproj" />
     <ProjectReference Include="..\Knowledge.Policy\Knowledge.Policy.csproj" />
-    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.10" />
     <PackageReference Include="ModelContextProtocol" Version="$(ModelContextProtocolVersion)" />
   </ItemGroup>
 </Project>

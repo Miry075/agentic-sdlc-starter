@@ -8,6 +8,6 @@
     <GenerateDocumentationFile>false</GenerateDocumentationFile>
     <!-- Version of the official MCP C# SDK. Floating on purpose until the first successful restore:
          pin it (for example 1.0.0) once you have verified the build, then keep it pinned. -->
-    <ModelContextProtocolVersion>*-*</ModelContextProtocolVersion>
+    <ModelContextProtocolVersion>2.2.0</ModelContextProtocolVersion>
   </PropertyGroup>
 </Project>
