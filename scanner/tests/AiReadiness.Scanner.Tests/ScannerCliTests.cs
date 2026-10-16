@@ -84,13 +84,14 @@ public class ScannerCliTests
     [InlineData("--min-score abc")]
     [InlineData("--min-score 101")]
     [InlineData("--nope")]
-    [InlineData("--html")]
+    [InlineData("--out")]
     [InlineData("--cta-text hello")]
     [InlineData("--cta-url javascript:alert(1)")]
     [InlineData("--cta-url not-a-url")]
     [InlineData("--apply")]
     [InlineData("--fix --all")]
     [InlineData("--fix --json")]
+    [InlineData("--fix --html")]
     public void Run_WithBadArguments_ReturnsUsageError(string commandLine)
     {
         var (code, _, error) = Run(commandLine.Split(' '));
@@ -130,7 +131,7 @@ public class ScannerCliTests
         var file = System.IO.Path.Combine(dir.Path, "report.html");
         Directory.CreateDirectory(dir.Path);
 
-        var (code, output, error) = Run("--html", file, "--cta-url", "https://example.test/book", "--cta-text", "Book a call");
+        var (code, output, error) = Run("--out", file, "--cta-url", "https://example.test/book", "--cta-text", "Book a call");
 
         Assert.Equal(ScannerCli.Ok, code);
         Assert.Contains("# AI-readiness", output);
@@ -244,7 +245,7 @@ public class ScannerCliTests
         var file = System.IO.Path.Combine(dir.Path, "mine.html");
         var browser = new FakeBrowser();
 
-        RunWithBrowser(browser, new FakeOpener(), "--html", file);
+        RunWithBrowser(browser, new FakeOpener(), "--out", file);
 
         Assert.Equal([file], browser.Opened);
         Assert.True(File.Exists(file));
@@ -262,6 +263,37 @@ public class ScannerCliTests
         Assert.Equal(ScannerCli.Ok, code);
         Assert.Empty(browser.Opened);
         Assert.DoesNotContain("HTML report written", error);
+    }
+
+    [Fact]
+    public void Run_WithHtmlFlagAndNoFile_WritesATempReportEvenWithoutABrowser()
+    {
+        var (code, _, error) = RunWithBrowser(null, new FakeOpener(), "--html");
+
+        Assert.Equal(ScannerCli.Ok, code);
+        var line = error.Split('\n').Single(l => l.StartsWith("HTML report written to ", StringComparison.Ordinal));
+        var path = line["HTML report written to ".Length..].Trim();
+        try
+        {
+            Assert.True(File.Exists(path));
+        }
+        finally
+        {
+            File.Delete(path);
+        }
+    }
+
+    [Fact]
+    public void Run_WithHtmlFlagAndNoOpen_WritesTheReportButDoesNotOpenIt()
+    {
+        var browser = new FakeBrowser();
+
+        var (_, _, error) = RunWithBrowser(browser, new FakeOpener(), "--html", "--no-open");
+
+        Assert.Empty(browser.Opened);
+        Assert.Contains("HTML report written to", error);
+        var path = error.Split('\n').Single(l => l.StartsWith("HTML report written to ", StringComparison.Ordinal))["HTML report written to ".Length..].Trim();
+        File.Delete(path);
     }
 
     [Fact]

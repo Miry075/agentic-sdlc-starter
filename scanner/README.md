@@ -17,7 +17,8 @@ The path can be relative or absolute and defaults to the current folder.
 | Option | Effect |
 |---|---|
 | `--json` | Full report as JSON, including every criterion |
-| `--html report.html` | Write the standalone HTML report to this file (see below) |
+| `--html` | Always write the standalone HTML report, even when output is piped or in CI (see below) |
+| `--out report.html` | Write the HTML report to this file instead of a temporary one |
 | `--no-open` | Do not open the HTML report in the browser |
 | `--cta-url <url>` / `--cta-text <text>` | Add a button to the HTML report, for example your booking page |
 | `--all` | Treat the path as a folder of repositories and rank them all (see below) |
@@ -78,11 +79,11 @@ Exit codes: `0` ok, `1` below `--min-score`, `2` bad arguments or folder not fou
 
 ## Shareable HTML report
 
-At a terminal, every scan writes the HTML report to a temporary file and opens it in your default browser, next to the markdown summary. Add `--no-open` to skip that. Nothing opens when the output is piped or redirected, when `--json` is used, or in CI (`CI`, `TF_BUILD` or `GITHUB_ACTIONS` set). If the browser cannot be started, the scan still succeeds and prints the file path. `--fix` never opens a browser.
+At a terminal, every scan writes the HTML report to a temporary file and opens it in your default browser, next to the markdown summary. You do not pass any option or file name. Add `--no-open` to skip the browser, `--html` to write the report even when nothing would open (piped output, CI), or `--out file.html` to choose where it is written. Nothing opens when the output is piped or redirected, when `--json` is used, or in CI (`CI`, `TF_BUILD` or `GITHUB_ACTIONS` set). If the browser cannot be started, the scan still succeeds and prints the file path. `--fix` never opens a browser.
 
 ```bash
 dotnet run --project scanner/src/AiReadiness.Scanner -- /path/to/repo \
-  --html report.html --cta-url https://example.com/book --cta-text "Book a call"
+  --out report.html --cta-url https://example.com/book --cta-text "Book a call"
 ```
 
 One self-contained file: no scripts, no external requests. It shows the score, the score per area, the next actions and every check, with a light and dark theme. E-mail it, host it, or print it to PDF from the browser. The button only accepts http and https addresses, and every value is HTML-encoded.
@@ -97,7 +98,7 @@ gh repo list my-org --limit 200 --json name --jq '.[].name' | xargs -I{} gh repo
 # Azure DevOps
 az repos list --org https://dev.azure.com/my-org --project MyProject --query "[].name" -o tsv | xargs -I{} git clone --depth 1 https://dev.azure.com/my-org/MyProject/_git/{} repos/{}
 
-dotnet run --project scanner/src/AiReadiness.Scanner -- repos --all --html org.html
+dotnet run --project scanner/src/AiReadiness.Scanner -- repos --all --out org.html
 ```
 
 `--all` scans every direct subfolder that is a Git repository, and ranks them lowest score first with the biggest gap of each. Shallow clones are enough: the scanner reads files, not history.
