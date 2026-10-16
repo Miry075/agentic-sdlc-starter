@@ -29,5 +29,6 @@
     <EmbeddedResource Include="..\..\..\templates\claude\skills\dotnet-design-principles\SKILL.md" LogicalName="assets/skills/dotnet-design-principles.md" />
     <EmbeddedResource Include="..\..\..\templates\claude\skills\dotnet-testing-standards\SKILL.md" LogicalName="assets/skills/dotnet-testing-standards.md" />
     <EmbeddedResource Include="..\..\..\templates\claude\skills\resolve-review-feedback\SKILL.md" LogicalName="assets/skills/resolve-review-feedback.md" />
+    <EmbeddedResource Include="..\..\..\templates\claude\skills\legacy-discovery\SKILL.md" LogicalName="assets/skills/legacy-discovery.md" />
   </ItemGroup>
 </Project>
