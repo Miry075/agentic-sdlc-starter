@@ -89,6 +89,14 @@ public static class Composition
         {
             services.AddAuthentication(DevAuthenticationHandler.SchemeName)
                 .AddScheme<AuthenticationSchemeOptions, DevAuthenticationHandler>(DevAuthenticationHandler.SchemeName, _ => { });
+            if (options.Auth.Dev.UseAzureCli)
+            {
+                services.AddSingleton<AzureCliTokenProvider>();
+                services.AddSingleton<IDownstreamTokenProvider>(sp => sp.GetRequiredService<AzureCliTokenProvider>());
+                services.AddSingleton<IServiceTokenProvider>(sp => sp.GetRequiredService<AzureCliTokenProvider>());
+                return;
+            }
+
             services.AddSingleton<NoTokenProvider>();
             services.AddSingleton<IDownstreamTokenProvider>(sp => sp.GetRequiredService<NoTokenProvider>());
             services.AddSingleton<IServiceTokenProvider>(sp => sp.GetRequiredService<NoTokenProvider>());

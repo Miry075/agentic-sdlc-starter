@@ -38,6 +38,9 @@ public sealed class DevAuthOptions
 {
     public string UserId { get; set; } = "dev@localhost";
     public List<string> Roles { get; set; } = ["developers"];
+
+    /// <summary>Read Azure DevOps and Azure Repos with the developer's `az login` instead of serving local files only.</summary>
+    public bool UseAzureCli { get; set; }
 }
 
 public sealed class PolicyOptions

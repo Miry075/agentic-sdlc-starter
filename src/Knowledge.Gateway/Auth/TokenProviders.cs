@@ -33,6 +33,25 @@ public sealed class ManagedIdentityTokenProvider : IServiceTokenProvider
     }
 }
 
+/// <summary>
+/// Dev mode on a developer machine: every call uses the developer's own Azure CLI sign-in (<c>az login</c>),
+/// so work items and repositories are read with exactly the developer's rights. No secret or PAT is stored.
+/// Dev mode refuses to start in Production, so this never serves other users.
+/// </summary>
+public sealed class AzureCliTokenProvider : IDownstreamTokenProvider, IServiceTokenProvider
+{
+    private readonly TokenCredential _credential = new AzureCliCredential();
+
+    public Task<string> GetTokenAsync(CallerContext caller, string scope, CancellationToken cancellationToken) =>
+        GetTokenAsync(scope, cancellationToken);
+
+    public async Task<string> GetTokenAsync(string scope, CancellationToken cancellationToken)
+    {
+        var token = await _credential.GetTokenAsync(new TokenRequestContext([scope]), cancellationToken);
+        return token.Token;
+    }
+}
+
 /// <summary>Used in Dev mode, where no cloud source is configured.</summary>
 public sealed class NoTokenProvider : IDownstreamTokenProvider, IServiceTokenProvider
 {
@@ -41,7 +60,7 @@ public sealed class NoTokenProvider : IDownstreamTokenProvider, IServiceTokenPro
     public Task<string> GetTokenAsync(string scope, CancellationToken cancellationToken) => throw Unavailable();
 
     private static NotSupportedException Unavailable() =>
-        new("No token provider is configured. Dev mode serves local sample data only.");
+        new("No token provider is configured. In Dev mode, set Auth:Dev:UseAzureCli=true and run `az login` to read Azure DevOps.");
 }
 
 /// <summary>

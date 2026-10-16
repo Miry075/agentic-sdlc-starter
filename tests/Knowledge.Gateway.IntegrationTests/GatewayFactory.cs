@@ -44,6 +44,16 @@ public class GatewayFactory : WebApplicationFactory<Program>
     }
 }
 
+/// <summary>Dev mode reading Azure DevOps with the developer's Azure CLI sign-in.</summary>
+public sealed class AzureCliGatewayFactory : GatewayFactory
+{
+    protected override void ConfigureWebHost(Microsoft.AspNetCore.Hosting.IWebHostBuilder builder)
+    {
+        base.ConfigureWebHost(builder);
+        builder.UseSetting("Auth:Dev:UseAzureCli", "true");
+    }
+}
+
 /// <summary>The same host in Production, where dev authentication must be refused.</summary>
 public sealed class ProductionGatewayFactory : GatewayFactory
 {
