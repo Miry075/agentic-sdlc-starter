@@ -1,4 +1,5 @@
 using System.Text.Json;
+using AiReadiness.Scanner.Domain;
 using AiReadiness.Scanner.Files;
 
 namespace AiReadiness.Scanner.Tests;
@@ -82,78 +83,25 @@ public class DiskRepoFilesTests
     }
 }
 
-public class ScannerCliTests
+public class DiskRepoOpenerTests
 {
-    private static (int Code, string Out, string Err) Run(FakeRepo repo, params string[] args)
+    [Fact]
+    public void OpenAll_ReturnsOnlyGitRepositoriesDirectlyInside_SortedByName()
     {
-        var output = new StringWriter();
-        var error = new StringWriter();
-        var code = ScannerCli.Run(args, output, error, _ => repo);
-        return (code, output.ToString(), error.ToString());
+        using var dir = new TempDir()
+            .Write("zeta/.git/HEAD", "x")
+            .Write("alpha/.git/HEAD", "x")
+            .Write("notes/README.md", "x")
+            .Write("alpha/nested/.git/HEAD", "x");
+
+        var repos = new DiskRepoOpener().OpenAll(dir.Path);
+
+        Assert.Equal(["alpha", "zeta"], repos.Select(r => r.Name));
     }
 
     [Fact]
-    public void Run_Default_PrintsMarkdownWithScoreAndBiggestGapFirst()
+    public void OpenAll_WithMissingFolder_Throws()
     {
-        var (code, output, _) = Run(new FakeRepo());
-
-        Assert.Equal(ScannerCli.Ok, code);
-        Assert.Contains("# AI-readiness: 14/100 (Not ready)", output);
-        Assert.Contains("1. **+6** AGENTS.md exists", output);
-    }
-
-    [Fact]
-    public void Run_WithJson_PrintsParseableReport()
-    {
-        var (_, output, _) = Run(new FakeRepo(), "--json");
-
-        using var doc = JsonDocument.Parse(output);
-        Assert.Equal(14, doc.RootElement.GetProperty("score").GetInt32());
-        Assert.Equal(100, doc.RootElement.GetProperty("max").GetInt32());
-    }
-
-    [Theory]
-    [InlineData("15", ScannerCli.BelowMinimum)]
-    [InlineData("14", ScannerCli.Ok)]
-    public void Run_WithMinScore_ExitCodeFollowsScore(string min, int expected)
-    {
-        Assert.Equal(expected, Run(new FakeRepo(), "--min-score", min).Code);
-    }
-
-    [Theory]
-    [InlineData("--min-score")]
-    [InlineData("--min-score abc")]
-    [InlineData("--min-score 101")]
-    [InlineData("--nope")]
-    public void Run_WithBadArguments_ReturnsUsageError(string commandLine)
-    {
-        var (code, _, error) = Run(new FakeRepo(), commandLine.Split(' '));
-
-        Assert.Equal(ScannerCli.UsageError, code);
-        Assert.NotEmpty(error);
-    }
-
-    [Fact]
-    public void Run_WithMissingFolder_ReportsItAndReturnsUsageError()
-    {
-        var output = new StringWriter();
-        var error = new StringWriter();
-
-        var code = ScannerCli.Run(["/definitely/not/here"], output, error);
-
-        Assert.Equal(ScannerCli.UsageError, code);
-        Assert.Contains("Folder not found", error.ToString());
-    }
-
-    [Fact]
-    public void Run_OnDiskRepository_ScoresRealFiles()
-    {
-        using var dir = new TempDir().Write("AGENTS.md", Sample.Agents).Write("CLAUDE.md", "@AGENTS.md");
-        var output = new StringWriter();
-
-        var code = ScannerCli.Run([dir.Path, "--min-score", "30"], output, new StringWriter());
-
-        Assert.Equal(ScannerCli.Ok, code);
-        Assert.Contains("Agent context (AGENTS.md) | 20/20", output.ToString());
+        Assert.Throws<DirectoryNotFoundException>(() => new DiskRepoOpener().OpenAll(System.IO.Path.Combine(System.IO.Path.GetTempPath(), Guid.NewGuid().ToString("N"))));
     }
 }

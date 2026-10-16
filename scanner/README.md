@@ -17,7 +17,10 @@ The path can be relative or absolute and defaults to the current folder.
 | Option | Effect |
 |---|---|
 | `--json` | Full report as JSON, including every criterion |
-| `--min-score 60` | Exit code 1 when the score is below 60, for CI |
+| `--html report.html` | Also write a standalone HTML report (see below) |
+| `--cta-url <url>` / `--cta-text <text>` | Add a button to the HTML report, for example your booking page |
+| `--all` | Treat the path as a folder of repositories and rank them all (see below) |
+| `--min-score 60` | Exit code 1 when a score is below 60, for CI. With `--all`: when any repository is below |
 
 Exit codes: `0` ok, `1` below `--min-score`, `2` bad arguments or folder not found.
 
@@ -35,6 +38,30 @@ Example output:
 
 1. **+5** At least one committed spec in docs/specs. Commit a spec per work item ...
 ```
+
+## Shareable HTML report
+
+```bash
+dotnet run --project scanner/src/AiReadiness.Scanner -- /path/to/repo \
+  --html report.html --cta-url https://example.com/book --cta-text "Book a call"
+```
+
+One self-contained file: no scripts, no external requests. It shows the score, the score per area, the next actions and every check, with a light and dark theme. E-mail it, host it, or print it to PDF from the browser. The button only accepts http and https addresses, and every value is HTML-encoded.
+
+## Scan a whole organisation
+
+Clone the repositories into one folder, then scan the folder:
+
+```bash
+# GitHub
+gh repo list my-org --limit 200 --json name --jq '.[].name' | xargs -I{} gh repo clone my-org/{} repos/{} -- --depth 1
+# Azure DevOps
+az repos list --org https://dev.azure.com/my-org --project MyProject --query "[].name" -o tsv | xargs -I{} git clone --depth 1 https://dev.azure.com/my-org/MyProject/_git/{} repos/{}
+
+dotnet run --project scanner/src/AiReadiness.Scanner -- repos --all --html org.html
+```
+
+`--all` scans every direct subfolder that is a Git repository, and ranks them lowest score first with the biggest gap of each. Shallow clones are enough: the scanner reads files, not history.
 
 ## What is scored
 
