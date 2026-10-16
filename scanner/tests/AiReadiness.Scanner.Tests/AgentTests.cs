@@ -23,9 +23,10 @@ public class AgentCommandTests
     [Fact]
     public void Arguments_RunTheSkillUnattendedWithOurLoginAndNoPrompts()
     {
-        var args = AgentCommand.Arguments;
+        var id = Guid.NewGuid();
+        var args = AgentCommand.Arguments(id);
 
-        Assert.Equal(["-p", "/ai-readiness unattended"], args.Take(2));
+        Assert.Equal(["-p", "/ai-readiness unattended", "--session-id", id.ToString()], args.Take(4));
         Assert.Contains("acceptEdits", args);
         Assert.Contains("none", args);
         Assert.DoesNotContain("--bare", args);
@@ -41,8 +42,10 @@ public class AgentCommandTests
     [Fact]
     public void Display_QuotesArgumentsAShellWouldSplit()
     {
-        Assert.Contains("'/ai-readiness unattended'", AgentCommand.Display());
-        Assert.StartsWith("claude -p ", AgentCommand.Display());
+        var display = AgentCommand.Display(Guid.NewGuid());
+
+        Assert.Contains("'/ai-readiness unattended'", display);
+        Assert.StartsWith("claude -p ", display);
     }
 }
 
@@ -93,7 +96,7 @@ public class ScannerAgentTests
         var (code, output, _) = Run(repo, agent, "--dry-run");
 
         Assert.Equal(ScannerCli.Ok, code);
-        Assert.Contains(AgentCommand.Display(), output);
+        Assert.Contains("claude -p '/ai-readiness unattended' --session-id ", output);
         Assert.Contains("Would install", output);
         Assert.Empty(agent.Runs);
         Assert.False(repo.FileExists(ReadinessSkillFix.Path));
@@ -109,9 +112,11 @@ public class ScannerAgentTests
 
         Assert.Equal(ScannerCli.Ok, code);
         Assert.True(repo.FileExists(ReadinessSkillFix.Path));
-        Assert.Equal(AgentCommand.Arguments, Assert.Single(agent.Runs).Arguments);
+        var arguments = Assert.Single(agent.Runs).Arguments;
+        var sessionId = Guid.Parse(arguments[arguments.ToList().IndexOf("--session-id") + 1]);
+        Assert.Equal(AgentCommand.Arguments(sessionId), arguments);
         Assert.Contains("AI-readiness: 14/100 to 34/100", output);
-        Assert.Contains("claude --continue", output);
+        Assert.Contains($"claude --resume {sessionId}", output);
     }
 
     [Fact]

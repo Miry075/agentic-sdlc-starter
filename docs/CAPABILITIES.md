@@ -180,7 +180,7 @@ ai-readiness <repo> --fix --apply   # create the files
 ### Let Claude Code do the rest
 
 - **In Claude Code:** type `/ai-readiness` in the repository. The skill works on a branch, applies the safe fixes, does the guided steps largest gain first, asks you every open question at once, re-scans until the score stops rising, and opens the report.
-- **From the terminal:** `ai-readiness agent <repo>` runs the same skill unattended with your Claude login (`--dry-run` shows the command). Minimum permissions: file edits, the scanner, `dotnet build`/`test`, the template check and local Git commands. No push. It ends with the questions to answer through `claude --continue`, and prints the score before and after.
+- **From the terminal:** `ai-readiness agent <repo>` runs the same skill unattended with your Claude login (`--dry-run` shows the command). Minimum permissions: file edits, the scanner, `dotnet build`/`test`, the template check and local Git commands. No push. It ends with the questions to answer, prints the score before and after, and the exact `claude --resume <id>` command to answer them in that same run.
 
 The last points always need you: real glossary meanings, confirmed evaluation questions and real work items cannot be read from code, and the skill never makes them up.
 
