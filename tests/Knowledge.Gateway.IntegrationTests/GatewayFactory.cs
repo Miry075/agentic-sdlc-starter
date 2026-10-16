@@ -1,4 +1,5 @@
 using Knowledge.Core;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
@@ -12,7 +13,7 @@ public class GatewayFactory : WebApplicationFactory<Program>
 
     public InMemoryAuditLog Audit { get; } = new();
 
-    protected override void ConfigureWebHost(Microsoft.AspNetCore.Hosting.IWebHostBuilder builder)
+    protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.UseEnvironment(EnvironmentName);
 
@@ -47,7 +48,7 @@ public class GatewayFactory : WebApplicationFactory<Program>
 /// <summary>Dev mode reading Azure DevOps with the developer's Azure CLI sign-in.</summary>
 public sealed class AzureCliGatewayFactory : GatewayFactory
 {
-    protected override void ConfigureWebHost(Microsoft.AspNetCore.Hosting.IWebHostBuilder builder)
+    protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         base.ConfigureWebHost(builder);
         builder.UseSetting("Auth:Dev:UseAzureCli", "true");
