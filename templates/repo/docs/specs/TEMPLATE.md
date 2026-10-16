@@ -8,12 +8,24 @@
 
 One or two sentences: what changes for the user, and why.
 
+## Existing acceptance criteria
+
+Behaviour already implemented that this change must not break: the regression baseline. Each with the code that satisfies it today (`file:line`). "None: new implementation" when there are none.
+
+- …
+
 ## Acceptance criteria
 
-Numbered, testable statements. Each one becomes at least one test.
+The additional criteria: what this change adds. Numbered, testable statements. Each one becomes at least one test.
 
 1. Given <context>, when <action>, then <expected result>.
 2. …
+
+## Use cases
+
+Each actor or caller, dependent behaviour elsewhere, and related workflows on the same code path. Each item concrete enough to verify.
+
+- …
 
 ## Edge cases
 
@@ -24,6 +36,10 @@ Numbered, testable statements. Each one becomes at least one test.
 What this work item explicitly does **not** do, so agents don't expand the scope.
 
 - …
+
+## Security criteria
+
+- From the work item's Security Criteria field, or "None stated".
 
 ## Business rules involved
 

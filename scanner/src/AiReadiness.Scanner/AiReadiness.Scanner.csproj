@@ -21,6 +21,7 @@
     <EmbeddedResource Include="..\..\..\templates\claude\skills\design-phase\SKILL.md" LogicalName="assets/skills/design-phase.md" />
     <EmbeddedResource Include="..\..\..\templates\claude\skills\build-phase\SKILL.md" LogicalName="assets/skills/build-phase.md" />
     <EmbeddedResource Include="..\..\..\templates\claude\skills\test-phase\SKILL.md" LogicalName="assets/skills/test-phase.md" />
+    <EmbeddedResource Include="..\..\..\templates\claude\skills\deliver-phase\SKILL.md" LogicalName="assets/skills/deliver-phase.md" />
     <EmbeddedResource Include="..\..\..\templates\claude\skills\release-phase\SKILL.md" LogicalName="assets/skills/release-phase.md" />
     <EmbeddedResource Include="..\..\..\templates\claude\skills\sdlc\SKILL.md" LogicalName="assets/skills/sdlc.md" />
   </ItemGroup>

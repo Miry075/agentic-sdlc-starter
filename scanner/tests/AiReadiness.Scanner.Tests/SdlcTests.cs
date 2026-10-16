@@ -20,6 +20,7 @@ public class SdlcSkillsTests
     [InlineData("design-phase")]
     [InlineData("build-phase")]
     [InlineData("test-phase")]
+    [InlineData("deliver-phase")]
     [InlineData("release-phase")]
     public void EverySkill_IsEmbeddedWithItsOwnName(string name)
     {
@@ -33,15 +34,37 @@ public class SdlcSkillsTests
     [InlineData("design-phase", "design")]
     [InlineData("build-phase", "build")]
     [InlineData("test-phase", "test")]
+    [InlineData("deliver-phase", "deliver")]
     [InlineData("release-phase", "release")]
-    public void PhaseSkills_CarryTheirPhaseAndTheBranchAndPrRules(string name, string phase)
+    public void PhaseSkills_FollowTheWorkItemFlowRules(string name, string phase)
     {
         var content = new EmbeddedAssets().Read(SdlcSkills.AssetName(name));
 
         Assert.Contains($"phase: \"{phase}\"", content);
-        Assert.Contains("never commit on the default branch", content);
-        Assert.Contains("Never push, merge, or open the pull request yourself", content);
+        Assert.Contains("never commit on the base branch", content);
+        Assert.Contains("(AB#<work-item-id>)", content);
+        Assert.Contains("Never merge", content);
+        Assert.Contains("never move a work item to Closed", content);
         Assert.Contains("Never invent", content);
+        Assert.Contains("dotnet-change-guardrails", content);
+        Assert.Contains("dotnet-design-principles", content);
+        Assert.Contains("dotnet-testing-standards", content);
+        Assert.Contains("resolve-review-feedback", content);
+    }
+
+    [Theory]
+    [InlineData("requirements-phase", "Existing AC checklist, first")]
+    [InlineData("requirements-phase", "model: \"opus\"")]
+    [InlineData("design-phase", "**design fit**")]
+    [InlineData("design-phase", "**testability**")]
+    [InlineData("build-phase", "**Gate:** ask the user to confirm you should implement")]
+    [InlineData("test-phase", "Health-sector sweep")]
+    [InlineData("test-phase", "unverified, not built")]
+    [InlineData("deliver-phase", "Ask who opens the pull request")]
+    [InlineData("deliver-phase", "Completed (Hours)")]
+    public void PhaseSkills_KeepTheGatesOfAzureWorkitemFlow(string name, string text)
+    {
+        Assert.Contains(text, new EmbeddedAssets().Read(SdlcSkills.AssetName(name)));
     }
 
     [Fact]

@@ -20,7 +20,7 @@ public sealed class ScannerCli(IRepoOpener opener, TimeProvider clock, IAssets a
                ai-readiness agent [path] [--dry-run]
                ai-readiness sdlc [path] [--apply]
 
-          sdlc              install the SDLC phase skills (/sdlc, /requirements-phase ... /release-phase); --apply writes them
+          sdlc              install the SDLC phase skills (/sdlc, /requirements-phase ... /deliver-phase, /release-phase); --apply writes them
 
           agent             run the /ai-readiness skill unattended in Claude Code (uses your Claude login)
 

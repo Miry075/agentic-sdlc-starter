@@ -50,26 +50,30 @@ Copy into each product repository (`templates/repo/`) or wiki (`templates/wiki/`
 | `project-settings.json` | The same deny rules and hook for one repository (`.claude/settings.json`). |
 | `hooks/block-classified.sh` | `PreToolUse` hook: blocks Read, Edit, Write, Grep and Glob on paths matching `classified-paths.txt`. Needs `jq`. |
 | `classified-paths.txt` | The blocked path patterns, one extended regex per line. |
-| `skills/sdlc` | `/sdlc <id>`: finds where a work item stands and runs the next phase. |
-| `skills/requirements-phase` | Work item to a committed spec with Given/When/Then acceptance criteria, edge cases, non-goals, risk tier and open questions. Spec PR before any code. |
-| `skills/design-phase` | Approved spec to a `## Design` section (components, contracts, test plan per criterion, risks), plus a Proposed ADR for structural decisions. |
-| `skills/build-phase` | Implements the design: one test per acceptance criterion, glossary names, full test suite green, AGENTS.md updated if the structure changed. |
-| `skills/test-phase` | Every criterion and edge case has a passing test; adds missing tests only, never fixes production code; records a `## Verification` table. |
+| `skills/sdlc` | `/sdlc <id or work item URL>`: resumes from the repository and runs the next phase of the work item. |
+| `skills/requirements-phase` | Fetch the work item, create `feature/<id>-<title>`, split existing from additional AC, Opus analysis of what and why (existing AC confirmed first), use-case sweep, spec committed. |
+| `skills/design-phase` | 2 to 3 real options assessed on use cases, existing AC, design fit and testability; the user chooses; `## Design` in the spec and a Proposed ADR for structural decisions. |
+| `skills/build-phase` | After an explicit go-ahead: the chosen option only, local conventions, design principles, tests written in the same step. No commit yet. |
+| `skills/test-phase` | Build and test for real, walk existing AC first, then additional AC and use cases, health-sector sweep, honest review, `## Verification` in the spec, then commit named files only after approval. |
+| `skills/deliver-phase` | Ask who opens the PR; push and open it only with approval; propose Completed (Hours) as a human-equivalent estimate and the Resolved transition, never Closed; handle review comments with `resolve-review-feedback`. |
 | `skills/release-phase` | Release notes, migration/configuration/feature-flag checklist, rollback plan and blockers in `docs/releases/<version>.md`. Never deploys or tags. |
 | `skills/ai-readiness` | Raises a repository's AI-readiness score without inventing content (see the scanner). |
 
 ### The SDLC with the phase skills
 
+The phase skills are `azure-workitem-flow` split into resumable phases, with the knowledge gateway and the phase policy added. They load the companion skills `dotnet-change-guardrails`, `dotnet-design-principles`, `dotnet-testing-standards` and `resolve-review-feedback` when they are available, and carry a short version of each rule when they are not.
+
 ```mermaid
 flowchart LR
-  WI[Work item] --> R["/requirements-phase<br/>docs/specs/id.md"]
-  R -- spec PR merged --> D["/design-phase<br/>## Design, Proposed ADR"]
-  D --> B["/build-phase<br/>code + one test per criterion"]
-  B --> T["/test-phase<br/>## Verification"]
-  T -- feature PR merged --> REL["/release-phase<br/>docs/releases/version.md"]
+  WI[Work item] --> R["/requirements-phase<br/>fetch, branch, what and why,<br/>existing AC confirmed, use cases"]
+  R --> D["/design-phase<br/>options, user chooses"]
+  D --> B["/build-phase<br/>go-ahead, code + tests"]
+  B --> T["/test-phase<br/>verify, review, commit"]
+  T --> DL["/deliver-phase<br/>PR, hours, Resolved"]
+  DL -- review comments --> DL
 ```
 
-Every phase works on a feature branch (`feature/<id>-spec`, then `feature/<id>-<slug>`), never commits on the default branch, starts commits with `#<id>` so the tracker links them, and ends by printing the pull request and the state change to make; it never pushes, merges, opens the PR or changes the work item itself. With the knowledge gateway each phase passes its `phase`, so the policy limits what it can read; without it, the skills read the same files locally.
+One branch per work item (`feature/<id>-<slugified-title>`), a pause for the user at every gate, commits of named files only with `(AB#<id>)`, and every push, pull request, hours or state change only after explicit approval. Never merge, never Closed. The flow is interactive by design: it stops in unattended runs.
 
 Install them in any repository, on a feature branch:
 
