@@ -21,6 +21,7 @@ public static class AgentCommand
         "Bash(git diff *)",
         "Bash(dotnet build *)",
         "Bash(dotnet test *)",
+        "Bash(bash scripts/check-docs-templates.sh *)",
     ];
 
     public static IReadOnlyList<string> Arguments { get; } =
