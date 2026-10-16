@@ -7,25 +7,38 @@ public interface IAgentRunner
 {
     bool IsAvailable();
 
+    /// <param name="onOutputLine">Called for every line the agent writes to standard output, as it arrives.</param>
     /// <returns>The agent's exit code.</returns>
-    int Run(string workingDirectory, IReadOnlyList<string> arguments);
+    int Run(string workingDirectory, IReadOnlyList<string> arguments, Action<string> onOutputLine);
 }
 
-/// <summary>Claude Code's CLI (`claude`), with the terminal attached so its output streams live.</summary>
+/// <summary>Claude Code's CLI (`claude`). Standard output is read line by line so progress can be shown live; errors go straight to the terminal.</summary>
 public sealed class ClaudeCodeRunner : IAgentRunner
 {
     public bool IsAvailable() => Find() is not null;
 
-    public int Run(string workingDirectory, IReadOnlyList<string> arguments)
+    public int Run(string workingDirectory, IReadOnlyList<string> arguments, Action<string> onOutputLine)
     {
         var executable = Find() ?? throw new InvalidOperationException("Claude Code is not on PATH.");
-        var info = new ProcessStartInfo(executable) { WorkingDirectory = workingDirectory, UseShellExecute = false };
+        var info = new ProcessStartInfo(executable)
+        {
+            WorkingDirectory = workingDirectory,
+            UseShellExecute = false,
+            RedirectStandardOutput = true,
+            RedirectStandardInput = true,
+        };
         foreach (var argument in arguments)
         {
             info.ArgumentList.Add(argument);
         }
 
         using var process = Process.Start(info) ?? throw new InvalidOperationException("Claude Code did not start.");
+        process.StandardInput.Close(); // nothing to pipe in; Claude Code must not wait for stdin
+        while (process.StandardOutput.ReadLine() is { } line)
+        {
+            onOutputLine(line);
+        }
+
         process.WaitForExit();
         return process.ExitCode;
     }

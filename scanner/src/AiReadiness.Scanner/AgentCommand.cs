@@ -34,6 +34,8 @@ public static class AgentCommand
     [
         "-p", Prompt,
         "--session-id", sessionId.ToString(),
+        "--output-format", "stream-json",
+        "--verbose",
         "--permission-mode", "acceptEdits",
         "--allowedTools", string.Join(",", AllowedTools),
     ];
