@@ -11,7 +11,8 @@ public sealed record CliOptions(
     CallToAction? Cta,
     bool Fix = false,
     bool Apply = false,
-    bool NoOpen = false)
+    bool NoOpen = false,
+    bool Html = false)
 {
     public static bool TryParse(string[] args, out CliOptions options, out string? error)
     {
@@ -20,7 +21,7 @@ public sealed record CliOptions(
         int? minScore = null;
         string? html = null, ctaUrl = null, ctaText = null;
         options = new CliOptions(path, false, false, null, null, null);
-        bool fix = false, apply = false, noOpen = false;
+        bool fix = false, apply = false, noOpen = false, htmlFlag = false;
         error = null;
 
         for (var i = 0; i < args.Length; i++)
@@ -32,6 +33,9 @@ public sealed record CliOptions(
                     break;
                 case "--all":
                     all = true;
+                    break;
+                case "--html":
+                    htmlFlag = true;
                     break;
                 case "--no-open":
                     noOpen = true;
@@ -51,7 +55,7 @@ public sealed record CliOptions(
 
                     minScore = min;
                     break;
-                case "--html" or "--cta-url" or "--cta-text":
+                case "--out" or "--cta-url" or "--cta-text":
                     var option = args[i];
                     if (i + 1 >= args.Length || args[i + 1].StartsWith("--", StringComparison.Ordinal))
                     {
@@ -60,7 +64,7 @@ public sealed record CliOptions(
                     }
 
                     var value = args[++i];
-                    if (option == "--html") html = value;
+                    if (option == "--out") html = value;
                     else if (option == "--cta-url") ctaUrl = value;
                     else ctaText = value;
                     break;
@@ -96,13 +100,13 @@ public sealed record CliOptions(
             return false;
         }
 
-        if (fix && (all || json || html is not null))
+        if (fix && (all || json || htmlFlag || html is not null))
         {
-            error = "--fix works on one repository and cannot be combined with --all, --json or --html.";
+            error = "--fix works on one repository and cannot be combined with --all, --json, --html or --out.";
             return false;
         }
 
-        options = new CliOptions(path, json, all, minScore, html, cta, fix, apply, noOpen);
+        options = new CliOptions(path, json, all, minScore, html, cta, fix, apply, noOpen, htmlFlag);
         return true;
     }
 }

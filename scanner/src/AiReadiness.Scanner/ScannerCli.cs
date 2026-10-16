@@ -19,8 +19,9 @@ public sealed class ScannerCli(IRepoOpener opener, TimeProvider clock, IAssets a
           path              repository folder, relative or absolute (default: current folder)
           --all             treat path as a folder of repositories and rank them all
           --json            print the full report as JSON instead of markdown
-          --html <file>     also write a standalone HTML report you can send to someone
-          --no-open         do not open the HTML report in the browser (it opens by default at a terminal)
+          --html            always write the standalone HTML report (it is written and opened by default at a terminal)
+          --out <file>      write the HTML report to this file instead of a temporary one
+          --no-open         do not open the HTML report in the browser
           --cta-url <url>   add a call-to-action button to the HTML report
           --cta-text <txt>  its label (needs --cta-url)
           --fix             show what the scanner can add to raise the score, plus prompts for the rest
@@ -130,16 +131,18 @@ public sealed class ScannerCli(IRepoOpener opener, TimeProvider clock, IAssets a
     private DateOnly Today() => DateOnly.FromDateTime(clock.GetUtcNow().UtcDateTime);
 
     /// <summary>
-    /// Writes the HTML report when asked for with --html, or when it will be opened. Opens it at a terminal unless --no-open.
+    /// Writes the HTML report when asked for (--html or --out) or when it will be opened. Opens it at a terminal unless --no-open.
     /// </summary>
     private void WriteHtml(CliOptions options, string name, TextWriter error, Func<string> render)
     {
         var open = browser is not null && !options.NoOpen && !options.Json;
-        var path = options.HtmlPath ?? (open ? TempReportPath(name) : null);
-        if (path is null)
+        var wanted = open || options.Html || options.HtmlPath is not null;
+        if (!wanted)
         {
             return;
         }
+
+        var path = options.HtmlPath ?? TempReportPath(name);
 
         Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(path))!);
         File.WriteAllText(path, render());
