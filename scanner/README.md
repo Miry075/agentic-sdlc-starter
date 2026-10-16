@@ -17,7 +17,8 @@ The path can be relative or absolute and defaults to the current folder.
 | Option | Effect |
 |---|---|
 | `--json` | Full report as JSON, including every criterion |
-| `--html report.html` | Also write a standalone HTML report (see below) |
+| `--html report.html` | Write the standalone HTML report to this file (see below) |
+| `--no-open` | Do not open the HTML report in the browser |
 | `--cta-url <url>` / `--cta-text <text>` | Add a button to the HTML report, for example your booking page |
 | `--all` | Treat the path as a folder of repositories and rank them all (see below) |
 | `--fix` | Show what the scanner can add to raise the score, plus prompts for the rest (see below) |
@@ -76,6 +77,8 @@ Safety rules:
 Exit codes: `0` ok, `1` below `--min-score`, `2` bad arguments or folder not found, `3` could not apply.
 
 ## Shareable HTML report
+
+At a terminal, every scan writes the HTML report to a temporary file and opens it in your default browser, next to the markdown summary. Add `--no-open` to skip that. Nothing opens when the output is piped or redirected, when `--json` is used, or in CI (`CI`, `TF_BUILD` or `GITHUB_ACTIONS` set). If the browser cannot be started, the scan still succeeds and prints the file path. `--fix` never opens a browser.
 
 ```bash
 dotnet run --project scanner/src/AiReadiness.Scanner -- /path/to/repo \

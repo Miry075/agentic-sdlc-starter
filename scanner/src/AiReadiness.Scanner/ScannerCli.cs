@@ -1,11 +1,12 @@
 using AiReadiness.Scanner.Checks;
 using AiReadiness.Scanner.Domain;
+using AiReadiness.Scanner.Files;
 using AiReadiness.Scanner.Remediation;
 using AiReadiness.Scanner.Reporting;
 
 namespace AiReadiness.Scanner;
 
-public sealed class ScannerCli(IRepoOpener opener, TimeProvider clock, IAssets assets)
+public sealed class ScannerCli(IRepoOpener opener, TimeProvider clock, IAssets assets, IBrowserLauncher? browser = null)
 {
     public const int Ok = 0;
     public const int BelowMinimum = 1;
@@ -19,6 +20,7 @@ public sealed class ScannerCli(IRepoOpener opener, TimeProvider clock, IAssets a
           --all             treat path as a folder of repositories and rank them all
           --json            print the full report as JSON instead of markdown
           --html <file>     also write a standalone HTML report you can send to someone
+          --no-open         do not open the HTML report in the browser (it opens by default at a terminal)
           --cta-url <url>   add a call-to-action button to the HTML report
           --cta-text <txt>  its label (needs --cta-url)
           --fix             show what the scanner can add to raise the score, plus prompts for the rest
@@ -74,7 +76,7 @@ public sealed class ScannerCli(IRepoOpener opener, TimeProvider clock, IAssets a
         var assessment = new ReadinessScanner(DefaultChecks).Scan(repo.Files);
 
         output.WriteLine(options.Json ? JsonReport.Render(assessment, repo.Name) : MarkdownReport.Render(assessment, repo.Name));
-        WriteHtml(options, error, () => HtmlReport.Render(assessment, repo.Name, Today(), options.Cta));
+        WriteHtml(options, repo.Name, error, () => HtmlReport.Render(assessment, repo.Name, Today(), options.Cta));
 
         return options.MinScore is { } required && assessment.Score < required ? BelowMinimum : Ok;
     }
@@ -120,21 +122,38 @@ public sealed class ScannerCli(IRepoOpener opener, TimeProvider clock, IAssets a
         var org = new OrgAssessment(repos.Select(r => new RepoResult(r.Name, scanner.Scan(r.Files))));
 
         output.WriteLine(options.Json ? JsonReport.RenderOrg(org) : MarkdownReport.RenderOrg(org));
-        WriteHtml(options, error, () => HtmlReport.RenderOrg(org, Today(), options.Cta));
+        WriteHtml(options, "organisation", error, () => HtmlReport.RenderOrg(org, Today(), options.Cta));
 
         return options.MinScore is { } required && org.AnyBelow(required) ? BelowMinimum : Ok;
     }
 
     private DateOnly Today() => DateOnly.FromDateTime(clock.GetUtcNow().UtcDateTime);
 
-    private static void WriteHtml(CliOptions options, TextWriter error, Func<string> render)
+    /// <summary>
+    /// Writes the HTML report when asked for with --html, or when it will be opened. Opens it at a terminal unless --no-open.
+    /// </summary>
+    private void WriteHtml(CliOptions options, string name, TextWriter error, Func<string> render)
     {
-        if (options.HtmlPath is null)
+        var open = browser is not null && !options.NoOpen && !options.Json;
+        var path = options.HtmlPath ?? (open ? TempReportPath(name) : null);
+        if (path is null)
         {
             return;
         }
 
-        File.WriteAllText(options.HtmlPath, render());
-        error.WriteLine($"HTML report written to {options.HtmlPath}");
+        Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(path))!);
+        File.WriteAllText(path, render());
+        error.WriteLine($"HTML report written to {path}");
+
+        if (open && !browser!.TryOpen(path))
+        {
+            error.WriteLine("Could not open the browser. Open the file above yourself.");
+        }
+    }
+
+    private string TempReportPath(string name)
+    {
+        var safe = string.Concat(name.Select(c => Path.GetInvalidFileNameChars().Contains(c) ? '-' : c));
+        return Path.Combine(Path.GetTempPath(), "ai-readiness", $"{safe}-{clock.GetUtcNow():yyyyMMdd-HHmmss}.html");
     }
 }

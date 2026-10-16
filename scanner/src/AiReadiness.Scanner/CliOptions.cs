@@ -10,7 +10,8 @@ public sealed record CliOptions(
     string? HtmlPath,
     CallToAction? Cta,
     bool Fix = false,
-    bool Apply = false)
+    bool Apply = false,
+    bool NoOpen = false)
 {
     public static bool TryParse(string[] args, out CliOptions options, out string? error)
     {
@@ -19,7 +20,7 @@ public sealed record CliOptions(
         int? minScore = null;
         string? html = null, ctaUrl = null, ctaText = null;
         options = new CliOptions(path, false, false, null, null, null);
-        bool fix = false, apply = false;
+        bool fix = false, apply = false, noOpen = false;
         error = null;
 
         for (var i = 0; i < args.Length; i++)
@@ -31,6 +32,9 @@ public sealed record CliOptions(
                     break;
                 case "--all":
                     all = true;
+                    break;
+                case "--no-open":
+                    noOpen = true;
                     break;
                 case "--fix":
                     fix = true;
@@ -98,7 +102,7 @@ public sealed record CliOptions(
             return false;
         }
 
-        options = new CliOptions(path, json, all, minScore, html, cta, fix, apply);
+        options = new CliOptions(path, json, all, minScore, html, cta, fix, apply, noOpen);
         return true;
     }
 }

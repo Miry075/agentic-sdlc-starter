@@ -16,6 +16,17 @@ internal sealed class FakeOpener(params (string Name, FakeRepo Repo)[] repos) : 
     public IReadOnlyList<RepoEntry> OpenAll(string parent) => repos.Select(r => new RepoEntry(r.Name, r.Repo)).ToList();
 }
 
+internal sealed class FakeBrowser(bool succeeds = true) : IBrowserLauncher
+{
+    public List<string> Opened { get; } = [];
+
+    public bool TryOpen(string path)
+    {
+        Opened.Add(path);
+        return succeeds;
+    }
+}
+
 internal sealed class FixedClock(DateTimeOffset now) : TimeProvider
 {
     public override DateTimeOffset GetUtcNow() => now;
@@ -195,5 +206,133 @@ public class ScannerCliTests
 
         Assert.Equal(ScannerCli.Ok, code);
         Assert.Contains("Nothing the scanner can safely create", output);
+    }
+
+    private static (int Code, string Out, string Err) RunWithBrowser(FakeBrowser? browser, IRepoOpener opener, params string[] args)
+    {
+        var output = new StringWriter();
+        var error = new StringWriter();
+        var code = new ScannerCli(opener, Clock, new EmbeddedAssets(), browser).Run(args, output, error);
+        return (code, output.ToString(), error.ToString());
+    }
+
+    [Fact]
+    public void Run_WithBrowser_WritesTheReportToATempFileAndOpensIt()
+    {
+        var browser = new FakeBrowser();
+
+        var (code, _, error) = RunWithBrowser(browser, new FakeOpener());
+
+        Assert.Equal(ScannerCli.Ok, code);
+        var path = Assert.Single(browser.Opened);
+        try
+        {
+            Assert.Contains("repo-20261016-080000.html", path);
+            Assert.Contains("AI-readiness report", File.ReadAllText(path));
+            Assert.Contains(path, error);
+        }
+        finally
+        {
+            File.Delete(path);
+        }
+    }
+
+    [Fact]
+    public void Run_WithExplicitHtmlPath_OpensThatFile()
+    {
+        using var dir = new TempDir();
+        var file = System.IO.Path.Combine(dir.Path, "mine.html");
+        var browser = new FakeBrowser();
+
+        RunWithBrowser(browser, new FakeOpener(), "--html", file);
+
+        Assert.Equal([file], browser.Opened);
+        Assert.True(File.Exists(file));
+    }
+
+    [Theory]
+    [InlineData("--no-open")]
+    [InlineData("--json")]
+    public void Run_WhenOpeningIsOffOrOutputIsJson_DoesNotOpenOrWriteAnything(string option)
+    {
+        var browser = new FakeBrowser();
+
+        var (code, _, error) = RunWithBrowser(browser, new FakeOpener(), option);
+
+        Assert.Equal(ScannerCli.Ok, code);
+        Assert.Empty(browser.Opened);
+        Assert.DoesNotContain("HTML report written", error);
+    }
+
+    [Fact]
+    public void Run_WithoutABrowser_WritesNoHtmlUnlessAsked()
+    {
+        var (code, _, error) = RunWithBrowser(null, new FakeOpener());
+
+        Assert.Equal(ScannerCli.Ok, code);
+        Assert.DoesNotContain("HTML report written", error);
+    }
+
+    [Fact]
+    public void Run_WhenTheBrowserCannotBeStarted_WarnsAndStillSucceeds()
+    {
+        var browser = new FakeBrowser(succeeds: false);
+
+        var (code, output, error) = RunWithBrowser(browser, new FakeOpener(), "--min-score", "0");
+
+        try
+        {
+            Assert.Equal(ScannerCli.Ok, code);
+            Assert.Contains("# AI-readiness", output);
+            Assert.Contains("Could not open the browser", error);
+        }
+        finally
+        {
+            browser.Opened.ForEach(File.Delete);
+        }
+    }
+
+    [Fact]
+    public void Run_All_OpensTheOrganisationReport()
+    {
+        var browser = new FakeBrowser();
+
+        RunWithBrowser(browser, new FakeOpener(("a", new FakeRepo()), ("b", new FakeRepo())), "--all", "/work");
+
+        var path = Assert.Single(browser.Opened);
+        try
+        {
+            Assert.Contains("2 repositories", File.ReadAllText(path));
+        }
+        finally
+        {
+            File.Delete(path);
+        }
+    }
+
+    [Fact]
+    public void Run_Fix_NeverOpensTheBrowser()
+    {
+        var browser = new FakeBrowser();
+
+        RunWithBrowser(browser, new FakeOpener(), "--fix");
+
+        Assert.Empty(browser.Opened);
+    }
+}
+
+public class AutoOpenTests
+{
+    [Theory]
+    [InlineData(false, null, true)]
+    [InlineData(true, null, false)]
+    [InlineData(false, "CI", false)]
+    [InlineData(false, "TF_BUILD", false)]
+    [InlineData(false, "GITHUB_ACTIONS", false)]
+    public void IsAllowed_OnlyAtATerminalOutsideCi(bool redirected, string? ciVariable, bool expected)
+    {
+        var allowed = AutoOpen.IsAllowed(redirected, name => name == ciVariable ? "true" : null);
+
+        Assert.Equal(expected, allowed);
     }
 }
