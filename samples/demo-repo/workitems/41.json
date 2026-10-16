@@ -1,0 +1,11 @@
+{
+  "id": 41,
+  "title": "Clarify VAT rules for credit notes",
+  "state": "New",
+  "description": "Finance wants to know which VAT rate applies when part of an invoice is credited.",
+  "acceptanceCriteria": "1. The rule is written down in the glossary and the spec.",
+  "comments": [
+    { "createdAt": "2026-10-01T09:00:00Z", "text": "Ask finance.lead@example.test about the reduced rate." }
+  ],
+  "links": [ "Related #42" ]
+}

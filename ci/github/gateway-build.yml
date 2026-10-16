@@ -1,0 +1,21 @@
+# Copy to .github/workflows/gateway-build.yml to build and test the knowledge gateway on every pull request.
+name: Gateway build
+
+on:
+  pull_request:
+    branches: [main]
+    paths: ["src/**", "tests/**", "policy/**", "samples/**", "Directory.Build.props", "Knowledge.Gateway.sln"]
+
+permissions:
+  contents: read
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+      - run: dotnet build Knowledge.Gateway.sln --configuration Release
+      - run: dotnet test Knowledge.Gateway.sln --configuration Release --no-build
