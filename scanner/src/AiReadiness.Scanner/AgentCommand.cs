@@ -10,16 +10,18 @@ public static class AgentCommand
 {
     public const string Prompt = "/ai-readiness unattended";
 
+    public static string PromptFor(string branch) => $"{Prompt} branch={branch}";
+
     public static IReadOnlyList<string> AllowedTools { get; } =
     [
         "Bash(ai-readiness *)",
         "Bash(command -v *)",
         "Bash(git status *)",
-        "Bash(git switch *)",
         "Bash(git add *)",
         "Bash(git commit *)",
         "Bash(git log *)",
-        "Bash(git branch *)",
+        "Bash(git branch --show-current)",
+        "Bash(git symbolic-ref *)",
         "Bash(git diff *)",
         "Bash(dotnet build *)",
         "Bash(dotnet test *)",
@@ -30,9 +32,14 @@ public static class AgentCommand
     /// The run gets a known session ID, because `claude --continue` skips `claude -p` sessions:
     /// the only reliable way back into this run is `claude --resume <id>`.
     /// </summary>
-    public static IReadOnlyList<string> Arguments(Guid sessionId) =>
+    /// <remarks>
+    /// The wrapper creates the feature branch before Claude Code starts, and Claude Code gets no command that
+    /// switches, creates, resets or deletes branches (no git switch, checkout, reset or branch -D): it can only
+    /// commit on the branch it was given.
+    /// </remarks>
+    public static IReadOnlyList<string> Arguments(Guid sessionId, string branch) =>
     [
-        "-p", Prompt,
+        "-p", PromptFor(branch),
         "--session-id", sessionId.ToString(),
         "--output-format", "stream-json",
         "--verbose",
@@ -43,6 +50,6 @@ public static class AgentCommand
     public static string ResumeCommand(Guid sessionId) => $"claude --resume {sessionId}";
 
     /// <summary>The command as you would type it, for --dry-run.</summary>
-    public static string Display(Guid sessionId) =>
-        "claude " + string.Join(" ", Arguments(sessionId).Select(a => a.Any(c => char.IsWhiteSpace(c) || c is '*' or '(' or ')' or ',') ? $"'{a}'" : a));
+    public static string Display(Guid sessionId, string branch) =>
+        "claude " + string.Join(" ", Arguments(sessionId, branch).Select(a => a.Any(c => char.IsWhiteSpace(c) || c is '*' or '(' or ')' or ',') ? $"'{a}'" : a));
 }

@@ -6,4 +6,4 @@ IBrowserLauncher? browser = AutoOpen.IsAllowed(Console.IsOutputRedirected, Envir
     ? new SystemBrowserLauncher()
     : null;
 
-return new ScannerCli(new DiskRepoOpener(), TimeProvider.System, new EmbeddedAssets(), browser, new ClaudeCodeRunner()).Run(args, Console.Out, Console.Error);
+return new ScannerCli(new DiskRepoOpener(), TimeProvider.System, new EmbeddedAssets(), browser, new ClaudeCodeRunner(), new GitCli()).Run(args, Console.Out, Console.Error);

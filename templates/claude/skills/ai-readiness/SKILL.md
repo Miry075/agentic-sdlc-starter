@@ -14,14 +14,19 @@ You prepare this repository for AI coding agents, guided by the `ai-readiness` s
 - Never print, copy or move secret values. Never weaken `.claude/settings.json` deny rules.
 - Only create or edit documentation and configuration: `AGENTS.md`, `CLAUDE.md`, `docs/`, `evals/`, `.gitignore`, `.claude/`, CI files the scanner names. Do not change application code.
 - Do not game the scanner: no filler glossary terms, no placeholder specs, no evaluation questions the user has not confirmed.
-- Never push and never merge. The user reviews the branch.
+- **Branch policy.** All changes go on one feature branch, `feature/ai-readiness-<YYYY-MM-DD>`, created from the default branch. Never commit on the default branch (`main`, `master`, or whatever `origin/HEAD` points to) or on any other branch, and never switch away from the feature branch once you are on it. Changes reach the default branch only through a pull request that the user opens, reviews and merges.
+- Never push, never merge, never open the pull request yourself. You prepare it; the user sends it.
 
 ## 1. Check the ground
 
 1. Run `command -v ai-readiness`. If it is missing, stop and tell the user to install it: clone https://github.com/Miry075/agentic-sdlc-starter and run `scanner/install.sh`.
-2. Run `git status --porcelain`. If there are uncommitted changes, ask the user whether to continue before touching anything.
-3. Create a branch: `git switch -c ai-readiness/<today as YYYY-MM-DD>`.
-4. Record the starting score: `ai-readiness . --json --no-open` (field `score`).
+2. Run `git status --porcelain`. If there are uncommitted changes, stop: ask the user to commit or stash them first (in an unattended run, report it and end). They must not end up in the feature branch.
+3. Find the default branch: `git symbolic-ref --short refs/remotes/origin/HEAD` (drop the `origin/` prefix). If that fails, use `main` if it exists, otherwise `master`.
+4. Get on the feature branch:
+   - If you were invoked with `branch=<name>` (the `ai-readiness agent` command does this), the branch already exists and you are on it. Check with `git branch --show-current` and do not create or switch branches.
+   - Otherwise create it from the default branch: `git switch -c feature/ai-readiness-<today as YYYY-MM-DD> <default branch>`. If that name exists, add `-2`, `-3`.
+5. Before **every** commit in this skill, run `git branch --show-current`. If it does not print the feature branch, stop and tell the user. Never commit anywhere else.
+6. Record the starting score: `ai-readiness . --json --no-open` (field `score`).
 
 ## 2. Apply the safe fixes
 
@@ -60,4 +65,8 @@ Stop when a pass through step 3 no longer raises the score, or when only steps t
 2. Report, in a short table: starting score, final score, points per area.
 3. List what is left and why: open `TODO(human)` questions, evaluation questions to confirm, work items to describe.
 4. Repeat the notes from step 2 that need action (for example: install `jq`; tell the team that the CI check now fails pull requests that change the structure without updating AGENTS.md).
-5. Tell the user the branch name and suggest opening a pull request after review.
+5. Prepare the pull request, without pushing or opening it:
+   - **Source:** the feature branch. **Target:** the default branch.
+   - **Title:** `AI-readiness: <starting score> to <final score>`.
+   - **Description** (print it in full, ready to paste): the score table, what changed in each area with the files, the open `TODO(human)` questions, the notes reviewers must act on (for example the CI check that now fails pull requests), and the commits (`git log --oneline <default branch>..HEAD`).
+   - **Commands for the user:** `git push -u origin <feature branch>`, then either `az repos pr create --source-branch <feature branch> --target-branch <default branch> --title "<title>" --description "<description>"` for Azure DevOps, `gh pr create --base <default branch> --head <feature branch> --title "<title>" --body "<description>"` for GitHub, or the web page of the repository.
