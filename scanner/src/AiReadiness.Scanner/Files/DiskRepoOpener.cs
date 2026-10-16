@@ -1,4 +1,5 @@
 using AiReadiness.Scanner.Domain;
+using AiReadiness.Scanner.Remediation;
 
 namespace AiReadiness.Scanner.Files;
 
@@ -9,6 +10,8 @@ public sealed class DiskRepoOpener : IRepoOpener
         var files = new DiskRepoFiles(path);
         return new RepoEntry(new DirectoryInfo(Path.GetFullPath(path)).Name, files);
     }
+
+    public IRepoWriter OpenWriter(string path) => new DiskRepoWriter(path);
 
     /// <summary>Every direct subfolder that is a Git repository (contains .git). Symbolic links are skipped.</summary>
     public IReadOnlyList<RepoEntry> OpenAll(string parent)

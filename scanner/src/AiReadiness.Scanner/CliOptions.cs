@@ -8,7 +8,9 @@ public sealed record CliOptions(
     bool All,
     int? MinScore,
     string? HtmlPath,
-    CallToAction? Cta)
+    CallToAction? Cta,
+    bool Fix = false,
+    bool Apply = false)
 {
     public static bool TryParse(string[] args, out CliOptions options, out string? error)
     {
@@ -17,6 +19,7 @@ public sealed record CliOptions(
         int? minScore = null;
         string? html = null, ctaUrl = null, ctaText = null;
         options = new CliOptions(path, false, false, null, null, null);
+        bool fix = false, apply = false;
         error = null;
 
         for (var i = 0; i < args.Length; i++)
@@ -28,6 +31,12 @@ public sealed record CliOptions(
                     break;
                 case "--all":
                     all = true;
+                    break;
+                case "--fix":
+                    fix = true;
+                    break;
+                case "--apply":
+                    apply = true;
                     break;
                 case "--min-score":
                     if (i + 1 >= args.Length || !int.TryParse(args[++i], out var min) || min is < 0 or > 100)
@@ -77,7 +86,19 @@ public sealed record CliOptions(
             return false;
         }
 
-        options = new CliOptions(path, json, all, minScore, html, cta);
+        if (apply && !fix)
+        {
+            error = "--apply only works together with --fix.";
+            return false;
+        }
+
+        if (fix && (all || json || html is not null))
+        {
+            error = "--fix works on one repository and cannot be combined with --all, --json or --html.";
+            return false;
+        }
+
+        options = new CliOptions(path, json, all, minScore, html, cta, fix, apply);
         return true;
     }
 }

@@ -1,12 +1,17 @@
 using System.Text.Json;
 using AiReadiness.Scanner.Domain;
 using AiReadiness.Scanner.Files;
+using AiReadiness.Scanner.Remediation;
 
 namespace AiReadiness.Scanner.Tests;
 
 internal sealed class FakeOpener(params (string Name, FakeRepo Repo)[] repos) : IRepoOpener
 {
-    public RepoEntry Open(string path) => new("repo", repos.FirstOrDefault().Repo ?? new FakeRepo());
+    private readonly FakeRepo _single = repos.FirstOrDefault().Repo ?? new FakeRepo();
+
+    public RepoEntry Open(string path) => new("repo", _single);
+
+    public IRepoWriter OpenWriter(string path) => _single;
 
     public IReadOnlyList<RepoEntry> OpenAll(string parent) => repos.Select(r => new RepoEntry(r.Name, r.Repo)).ToList();
 }
@@ -24,7 +29,7 @@ public class ScannerCliTests
     {
         var output = new StringWriter();
         var error = new StringWriter();
-        var code = new ScannerCli(opener, Clock).Run(args, output, error);
+        var code = new ScannerCli(opener, Clock, new EmbeddedAssets()).Run(args, output, error);
         return (code, output.ToString(), error.ToString());
     }
 
@@ -72,6 +77,9 @@ public class ScannerCliTests
     [InlineData("--cta-text hello")]
     [InlineData("--cta-url javascript:alert(1)")]
     [InlineData("--cta-url not-a-url")]
+    [InlineData("--apply")]
+    [InlineData("--fix --all")]
+    [InlineData("--fix --json")]
     public void Run_WithBadArguments_ReturnsUsageError(string commandLine)
     {
         var (code, _, error) = Run(commandLine.Split(' '));
@@ -86,7 +94,7 @@ public class ScannerCliTests
         var output = new StringWriter();
         var error = new StringWriter();
 
-        var code = new ScannerCli(new DiskRepoOpener(), Clock).Run(["/definitely/not/here"], output, error);
+        var code = new ScannerCli(new DiskRepoOpener(), Clock, new EmbeddedAssets()).Run(["/definitely/not/here"], output, error);
 
         Assert.Equal(ScannerCli.UsageError, code);
         Assert.Contains("Folder not found", error.ToString());
@@ -98,7 +106,7 @@ public class ScannerCliTests
         using var dir = new TempDir().Write("AGENTS.md", Sample.Agents).Write("CLAUDE.md", "@AGENTS.md");
         var output = new StringWriter();
 
-        var code = new ScannerCli(new DiskRepoOpener(), Clock).Run([dir.Path, "--min-score", "30"], output, new StringWriter());
+        var code = new ScannerCli(new DiskRepoOpener(), Clock, new EmbeddedAssets()).Run([dir.Path, "--min-score", "30"], output, new StringWriter());
 
         Assert.Equal(ScannerCli.Ok, code);
         Assert.Contains("Agent context (AGENTS.md) | 20/20", output.ToString());
@@ -149,5 +157,43 @@ public class ScannerCliTests
 
         Assert.Equal(ScannerCli.UsageError, code);
         Assert.Contains("No Git repositories", error);
+    }
+
+    [Fact]
+    public void Run_Fix_PreviewsWithoutWritingAnything()
+    {
+        var repo = new FakeRepo().With("AGENTS.md", Sample.Agents);
+
+        var (code, output, _) = Run(new FakeOpener(("repo", repo)), "--fix");
+
+        Assert.Equal(ScannerCli.Ok, code);
+        Assert.Contains("Nothing has been written", output);
+        Assert.Contains("create `CLAUDE.md`", output);
+        Assert.False(repo.FileExists("CLAUDE.md"));
+    }
+
+    [Fact]
+    public void Run_FixApply_CreatesFilesAndReportsTheNewScore()
+    {
+        var repo = new FakeRepo().With("AGENTS.md", Sample.Agents);
+
+        var (code, output, _) = Run(new FakeOpener(("repo", repo)), "--fix", "--apply");
+
+        Assert.Equal(ScannerCli.Ok, code);
+        Assert.True(repo.FileExists("CLAUDE.md"));
+        Assert.True(repo.FileExists(".claude/settings.json"));
+        Assert.Contains("# Applied to `repo`:", output);
+    }
+
+    [Fact]
+    public void Run_FixApplyTwice_SecondRunHasNothingToCreate()
+    {
+        var opener = new FakeOpener(("repo", new FakeRepo().With("AGENTS.md", Sample.Agents)));
+        Run(opener, "--fix", "--apply");
+
+        var (code, output, _) = Run(opener, "--fix", "--apply");
+
+        Assert.Equal(ScannerCli.Ok, code);
+        Assert.Contains("Nothing the scanner can safely create", output);
     }
 }

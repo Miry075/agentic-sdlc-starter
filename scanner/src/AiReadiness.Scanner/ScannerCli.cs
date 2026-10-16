@@ -1,14 +1,16 @@
 using AiReadiness.Scanner.Checks;
 using AiReadiness.Scanner.Domain;
+using AiReadiness.Scanner.Remediation;
 using AiReadiness.Scanner.Reporting;
 
 namespace AiReadiness.Scanner;
 
-public sealed class ScannerCli(IRepoOpener opener, TimeProvider clock)
+public sealed class ScannerCli(IRepoOpener opener, TimeProvider clock, IAssets assets)
 {
     public const int Ok = 0;
     public const int BelowMinimum = 1;
     public const int UsageError = 2;
+    public const int CouldNotApply = 3;
 
     private const string Usage = """
         Usage: ai-readiness [path] [options]
@@ -19,6 +21,8 @@ public sealed class ScannerCli(IRepoOpener opener, TimeProvider clock)
           --html <file>     also write a standalone HTML report you can send to someone
           --cta-url <url>   add a call-to-action button to the HTML report
           --cta-text <txt>  its label (needs --cta-url)
+          --fix             show what the scanner can add to raise the score, plus prompts for the rest
+          --apply           with --fix: create the files (never overwrites an existing file)
           --min-score <n>   exit with code 1 when a score is lower than n (for CI)
         """;
 
@@ -50,6 +54,11 @@ public sealed class ScannerCli(IRepoOpener opener, TimeProvider clock)
 
         try
         {
+            if (options.Fix)
+            {
+                return RunFix(options, output, error);
+            }
+
             return options.All ? RunAll(options, output, error) : RunOne(options, output, error);
         }
         catch (DirectoryNotFoundException ex)
@@ -68,6 +77,34 @@ public sealed class ScannerCli(IRepoOpener opener, TimeProvider clock)
         WriteHtml(options, error, () => HtmlReport.Render(assessment, repo.Name, Today(), options.Cta));
 
         return options.MinScore is { } required && assessment.Score < required ? BelowMinimum : Ok;
+    }
+
+    private int RunFix(CliOptions options, TextWriter output, TextWriter error)
+    {
+        var repo = opener.Open(options.Path);
+        var scanner = new ReadinessScanner(DefaultChecks);
+        var planner = new RemediationPlanner(scanner, RemediationPlanner.DefaultFixes, Remediation.Guided.GuidedCatalog.All, assets);
+        var plan = planner.Plan(repo.Files, Today());
+
+        if (!options.Apply || plan.AllChanges.Count == 0)
+        {
+            output.WriteLine(FixPlanReport.RenderPreview(plan, repo.Name));
+            return Ok;
+        }
+
+        try
+        {
+            opener.OpenWriter(options.Path).CreateAll(plan.AllChanges);
+        }
+        catch (FixConflictException ex)
+        {
+            error.WriteLine(ex.Message);
+            return CouldNotApply;
+        }
+
+        var after = scanner.Scan(opener.Open(options.Path).Files);
+        output.WriteLine(FixPlanReport.RenderApplied(plan, repo.Name, after.Score, after.MaxScore));
+        return Ok;
     }
 
     private int RunAll(CliOptions options, TextWriter output, TextWriter error)

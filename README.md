@@ -97,6 +97,7 @@ agentic-sdlc-starter/
 │   ├── wiki/ai-ready-page.md         # template for wiki pages served to agents
 │   └── claude/
 │       ├── managed-settings.json     # org-wide Claude Code settings
+│       ├── project-settings.json     # per-repo Claude Code settings (deny rules + hook)
 │       ├── hooks/block-classified.sh # PreToolUse hook: blocks classified files
 │       ├── classified-paths.txt      # patterns the hook blocks
 │       └── skills/                   # one skill per SDLC phase
