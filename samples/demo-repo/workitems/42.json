@@ -1,0 +1,9 @@
+{
+  "id": 42,
+  "title": "Issue a credit note for an invoice",
+  "state": "Active",
+  "description": "A billing clerk must be able to cancel all or part of an issued invoice.",
+  "acceptanceCriteria": "See docs/specs/42.md.",
+  "comments": [],
+  "links": [ "Related #41" ]
+}

@@ -7,13 +7,13 @@
 defaultDecision: deny
 
 tools:
-  get_glossary_term:   { layer: L1, description: Domain term definition }
-  search_adrs:         { layer: L1, description: Architecture decision records }
-  get_spec:            { layer: L1, description: Committed spec for a work item }
-  search_code_graph:   { layer: L2, description: Symbols, dependencies, call paths }
-  get_service_map:     { layer: L2, description: Contracts and service dependencies }
-  search_product_docs: { layer: L3, description: ai-ready wiki pages only }
-  get_work_item:       { layer: L4, description: Work item, acceptance criteria, comments }
+  get_glossary_term:   { layer: L1, description: "Domain term definition" }
+  search_adrs:         { layer: L1, description: "Architecture decision records" }
+  get_spec:            { layer: L1, needsWorkItemState: true, description: "Committed spec for a work item" }
+  search_code_graph:   { layer: L2, description: "Symbols, dependencies, call paths" }
+  get_service_map:     { layer: L2, description: "Contracts and service dependencies" }
+  search_product_docs: { layer: L3, description: "ai-ready wiki pages only" }
+  get_work_item:       { layer: L4, needsWorkItemState: true, description: "Work item, acceptance criteria, comments" }
 
 phases:
   requirements:

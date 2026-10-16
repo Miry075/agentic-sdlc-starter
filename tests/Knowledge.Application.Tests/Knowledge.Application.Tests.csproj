@@ -1,0 +1,7 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Knowledge.Application\Knowledge.Application.csproj" />
+    <ProjectReference Include="..\..\src\Knowledge.Policy\Knowledge.Policy.csproj" />
+    <ProjectReference Include="..\..\src\Knowledge.Redaction\Knowledge.Redaction.csproj" />
+  </ItemGroup>
+</Project>

@@ -101,6 +101,7 @@ agentic-sdlc-starter/
 │       ├── classified-paths.txt      # patterns the hook blocks
 │       └── skills/                   # one skill per SDLC phase
 ├── policy/phase-access.yaml          # phase → tools policy, deny by default
+├── src/, tests/, samples/            # reference knowledge gateway (.NET). See docs/gateway/README.md
 ├── scanner/                          # AI-readiness scanner (.NET CLI): score + next actions
 ├── evals/
 │   ├── questions.yaml                # evaluation set: real questions + expected sources
@@ -144,7 +145,7 @@ Rewrite the 10 most important business-rule pages with `templates/wiki/ai-ready-
 ## Roadmap
 
 - [x] Templates, policy, evaluation set, CI checks
-- [ ] Reference knowledge gateway (.NET, MCP): phase policy, data redaction, audit via OpenTelemetry
+- [x] Reference knowledge gateway v0.1 (.NET, MCP): phase policy, data redaction, audit, Entra ID, repo context and work items, upstream MCP servers. [Run it](docs/gateway/README.md) · [Design](docs/gateway/DESIGN.md). Written against the real SDKs but not yet built with the real packages: expect small fixes on first build.
 - [x] AI-readiness scanner: a score out of 100 per repo, with the next actions ranked. [Run it](scanner/README.md) · CI: `ci/github/ai-readiness.yml`, `ci/azure-devops/ai-readiness.yml`
 - [ ] Evaluation runner
 

@@ -1,0 +1,13 @@
+<Project>
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <InvariantGlobalization>true</InvariantGlobalization>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+    <!-- Version of the official MCP C# SDK. Floating on purpose until the first successful restore:
+         pin it (for example 1.0.0) once you have verified the build, then keep it pinned. -->
+    <ModelContextProtocolVersion>*-*</ModelContextProtocolVersion>
+  </PropertyGroup>
+</Project>
