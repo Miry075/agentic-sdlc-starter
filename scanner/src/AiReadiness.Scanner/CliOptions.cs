@@ -17,6 +17,7 @@ public sealed record CliOptions(
     public static bool TryParse(string[] args, out CliOptions options, out string? error)
     {
         var path = ".";
+        var pathGiven = false;
         bool json = false, all = false;
         int? minScore = null;
         string? html = null, ctaUrl = null, ctaText = null;
@@ -72,7 +73,14 @@ public sealed record CliOptions(
                     error = $"Unknown option {unknown}.";
                     return false;
                 default:
+                    if (pathGiven)
+                    {
+                        error = $"Give one repository path, not two ('{path}' and '{args[i]}').";
+                        return false;
+                    }
+
                     path = args[i];
+                    pathGiven = true;
                     break;
             }
         }

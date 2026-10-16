@@ -18,7 +18,7 @@ You prepare this repository for AI coding agents, guided by the `ai-readiness` s
 
 ## 1. Check the ground
 
-1. Run `command -v ai-readiness`. If it is missing, stop and tell the user to install it (see https://github.com/Miry075/agentic-sdlc-starter/tree/main/scanner): `dotnet pack scanner/src/AiReadiness.Scanner -c Release -o ~/ai-readiness-nupkg && dotnet tool install --global ai-readiness --add-source ~/ai-readiness-nupkg`.
+1. Run `command -v ai-readiness`. If it is missing, stop and tell the user to install it: clone https://github.com/Miry075/agentic-sdlc-starter and run `scanner/install.sh`.
 2. Run `git status --porcelain`. If there are uncommitted changes, ask the user whether to continue before touching anything.
 3. Create a branch: `git switch -c ai-readiness/<today as YYYY-MM-DD>`.
 4. Record the starting score: `ai-readiness . --json --no-open` (field `score`).

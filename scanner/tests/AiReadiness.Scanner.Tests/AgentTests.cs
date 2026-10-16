@@ -135,4 +135,10 @@ public class ScannerAgentTests
     {
         Assert.Equal(ScannerCli.UsageError, Run(GitRepo(), new FakeAgent(), "--yolo").Code);
     }
+
+    [Fact]
+    public void Agent_WithTwoPaths_ReturnsUsageError()
+    {
+        Assert.Equal(ScannerCli.UsageError, Run(GitRepo(), new FakeAgent(), "one", "two").Code);
+    }
 }
