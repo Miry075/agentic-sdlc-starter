@@ -26,7 +26,7 @@ public static class FixPlanReport
             var n = 1;
             foreach (var fix in plan.Automatic)
             {
-                sb.AppendLine($"{n++}. **+{fix.Gain}** {fix.Title}");
+                sb.AppendLine(fix.Gain > 0 ? $"{n++}. **+{fix.Gain}** {fix.Title}" : $"{n++}. **setup** {fix.Title}");
                 foreach (var change in fix.Changes)
                 {
                     sb.AppendLine($"   - create `{change.Path}`{(change.Executable ? " (executable)" : string.Empty)}");

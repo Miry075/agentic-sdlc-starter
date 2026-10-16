@@ -91,7 +91,7 @@ public sealed class ScannerCli(IRepoOpener opener, TimeProvider clock, IAssets a
 
         if (!options.Apply || plan.AllChanges.Count == 0)
         {
-            output.WriteLine(FixPlanReport.RenderPreview(plan, repo.Name));
+            output.WriteLine(options.Json ? JsonReport.RenderPlan(plan, repo.Name, appliedScore: null) : FixPlanReport.RenderPreview(plan, repo.Name));
             return Ok;
         }
 
@@ -106,7 +106,9 @@ public sealed class ScannerCli(IRepoOpener opener, TimeProvider clock, IAssets a
         }
 
         var after = scanner.Scan(opener.Open(options.Path).Files);
-        output.WriteLine(FixPlanReport.RenderApplied(plan, repo.Name, after.Score, after.MaxScore));
+        output.WriteLine(options.Json
+            ? JsonReport.RenderPlan(plan, repo.Name, after.Score)
+            : FixPlanReport.RenderApplied(plan, repo.Name, after.Score, after.MaxScore));
         return Ok;
     }
 

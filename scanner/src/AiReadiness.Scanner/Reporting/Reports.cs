@@ -1,6 +1,7 @@
 using System.Text;
 using System.Text.Json;
 using AiReadiness.Scanner.Domain;
+using AiReadiness.Scanner.Remediation;
 
 namespace AiReadiness.Scanner.Reporting;
 
@@ -78,6 +79,33 @@ public static class MarkdownReport
 public static class JsonReport
 {
     private static readonly JsonSerializerOptions Options = new() { WriteIndented = true };
+
+    /// <summary>The fix plan for tools such as the /ai-readiness skill. <paramref name="appliedScore"/> is set after --apply.</summary>
+    public static string RenderPlan(RemediationPlan plan, string repoName, int? appliedScore) =>
+        JsonSerializer.Serialize(new
+        {
+            repository = repoName,
+            applied = appliedScore is not null,
+            score = appliedScore ?? plan.Before.Score,
+            before = plan.Before.Score,
+            afterAutomatic = plan.After.Score,
+            potential = plan.PotentialScore,
+            max = plan.Before.MaxScore,
+            automatic = plan.Automatic.Select(f => new
+            {
+                title = f.Title,
+                gain = f.Gain,
+                files = f.Changes.Select(c => new { path = c.Path, executable = c.Executable }),
+                notes = f.Notes,
+            }),
+            guided = plan.Guided.Select(g => new
+            {
+                title = g.Title,
+                potentialGain = g.PotentialGain,
+                criteria = g.Criteria,
+                prompt = g.Prompt,
+            }),
+        }, Options);
 
     public static string RenderOrg(OrgAssessment org) =>
         JsonSerializer.Serialize(new

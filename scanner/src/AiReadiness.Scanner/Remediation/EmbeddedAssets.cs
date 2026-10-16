@@ -13,11 +13,12 @@ public static class AssetNames
     public const string AzurePipeline = "assets/azure-agent-context.yml";
     public const string AdrTemplate = "assets/adr-0000-template.md";
     public const string FirstAdr = "assets/adr-0001-record-architecture-decisions.md";
+    public const string ReadinessSkill = "assets/ai-readiness-skill.md";
 
     public static IReadOnlyList<string> All { get; } =
     [
         ProjectSettings, HookScript, ClassifiedPaths, FreshnessScript, DocsTemplateScript,
-        GithubWorkflow, AzurePipeline, AdrTemplate, FirstAdr,
+        GithubWorkflow, AzurePipeline, AdrTemplate, FirstAdr, ReadinessSkill,
     ];
 }
 

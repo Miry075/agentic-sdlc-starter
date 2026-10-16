@@ -12,7 +12,7 @@ public sealed record ProposedFix(string Title, IReadOnlyList<FileChange> Changes
 public sealed record AutomaticFix(string Title, IReadOnlyList<FileChange> Changes, IReadOnlyList<string> Notes, int Gain);
 
 /// <summary>Work that needs someone who knows the system. <see cref="Prompt"/> is ready to paste into Claude Code.</summary>
-public sealed record GuidedFix(string Title, string Prompt, int PotentialGain);
+public sealed record GuidedFix(string Title, string Prompt, int PotentialGain, IReadOnlyList<string> Criteria);
 
 public sealed record RemediationPlan(
     Assessment Before,

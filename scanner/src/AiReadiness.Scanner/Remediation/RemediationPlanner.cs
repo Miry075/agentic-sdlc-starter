@@ -17,6 +17,7 @@ public sealed class RemediationPlanner(
         new FirstAdrFix(),
         new ClaudeMdFix(),
         new CiChecksFix(),
+        new ReadinessSkillFix(),
     ];
 
     public RemediationPlan Plan(IRepoFiles repo, DateOnly today)
@@ -39,7 +40,7 @@ public sealed class RemediationPlanner(
             var failing = after.Gaps.Where(step.Covers).ToList();
             if (failing.Count > 0)
             {
-                steps.Add(new GuidedFix(step.Title, step.BuildPrompt(failing), failing.Sum(c => c.Weight)));
+                steps.Add(new GuidedFix(step.Title, step.BuildPrompt(failing), failing.Sum(c => c.Weight), failing.Select(c => c.Name).ToList()));
             }
         }
 

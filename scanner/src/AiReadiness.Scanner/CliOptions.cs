@@ -100,9 +100,9 @@ public sealed record CliOptions(
             return false;
         }
 
-        if (fix && (all || json || htmlFlag || html is not null))
+        if (fix && (all || htmlFlag || html is not null))
         {
-            error = "--fix works on one repository and cannot be combined with --all, --json, --html or --out.";
+            error = "--fix works on one repository and cannot be combined with --all, --html or --out.";
             return false;
         }
 
