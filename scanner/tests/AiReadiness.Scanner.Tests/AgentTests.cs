@@ -28,7 +28,7 @@ public class AgentCommandTests
 
         Assert.Equal(["-p", "/ai-readiness unattended", "--session-id", id.ToString()], args.Take(4));
         Assert.Contains("acceptEdits", args);
-        Assert.Contains("none", args);
+        Assert.DoesNotContain("--permission-prompts", args);
         Assert.DoesNotContain("--bare", args);
     }
 
@@ -130,9 +130,13 @@ public class ScannerAgentTests
     }
 
     [Fact]
-    public void Agent_WhenClaudeFails_ReturnsAgentFailed()
+    public void Agent_WhenClaudeFails_ReturnsAgentFailedWithoutAResumeHint()
     {
-        Assert.Equal(ScannerCli.AgentFailed, Run(GitRepo(), new FakeAgent(exitCode: 1)).Code);
+        var (code, output, error) = Run(GitRepo(), new FakeAgent(exitCode: 1));
+
+        Assert.Equal(ScannerCli.AgentFailed, code);
+        Assert.Contains("claude update", error);
+        Assert.DoesNotContain("claude --resume", output);
     }
 
     [Fact]

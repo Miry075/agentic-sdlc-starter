@@ -207,6 +207,12 @@ public sealed class ScannerCli(IRepoOpener opener, TimeProvider clock, IAssets a
         output.WriteLine($"Running the /ai-readiness skill in Claude Code on {repo.Name}. This can take a while and uses your Claude plan.");
         var code = agent.Run(Path.GetFullPath(path), AgentCommand.Arguments(sessionId));
 
+        if (code != 0)
+        {
+            error.WriteLine($"Claude Code stopped with exit code {code}. If it reported an unknown option, update it with `claude update`, then run this again.");
+            return AgentFailed;
+        }
+
         var after = scanner.Scan(opener.Open(path).Files);
         output.WriteLine();
         output.WriteLine($"AI-readiness: {before}/{after.MaxScore} to {after.Score}/{after.MaxScore}");
@@ -214,7 +220,7 @@ public sealed class ScannerCli(IRepoOpener opener, TimeProvider clock, IAssets a
         output.WriteLine("To answer its questions, resume this exact run (claude --continue would open a different conversation):");
         output.WriteLine($"  cd \"{Path.GetFullPath(path)}\"");
         output.WriteLine($"  {AgentCommand.ResumeCommand(sessionId)}");
-        return code == 0 ? Ok : AgentFailed;
+        return Ok;
     }
 
     private int RunAll(CliOptions options, TextWriter output, TextWriter error)

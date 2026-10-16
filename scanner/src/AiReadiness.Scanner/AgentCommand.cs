@@ -3,6 +3,8 @@ namespace AiReadiness.Scanner;
 /// <summary>
 /// The Claude Code call behind `ai-readiness agent`: runs the /ai-readiness skill unattended with the
 /// smallest set of permissions it needs. No push, no network tools, nothing outside these commands.
+/// In a `claude -p` run nobody can answer a permission prompt, so anything not allowed here is denied.
+/// (No --permission-prompts flag: it needs Claude Code v2.1.259+ and adds nothing for a plain -p run.)
 /// </summary>
 public static class AgentCommand
 {
@@ -34,7 +36,6 @@ public static class AgentCommand
         "--session-id", sessionId.ToString(),
         "--permission-mode", "acceptEdits",
         "--allowedTools", string.Join(",", AllowedTools),
-        "--permission-prompts", "none",
     ];
 
     public static string ResumeCommand(Guid sessionId) => $"claude --resume {sessionId}";
