@@ -37,6 +37,22 @@ dotnet run --project src/Knowledge.Gateway
 
 The repository must contain the files the tools serve: `docs/domain/glossary.md`, `docs/adr/`, `docs/specs/<id>.md` (the `/ai-readiness` skill creates them). Dev mode still refuses to start when `ASPNETCORE_ENVIRONMENT=Production`.
 
+## Publish it (run it without the source code)
+
+```bash
+scripts/publish-gateway.sh                    # tests, then publishes to ~/.knowledge-gateway
+~/.knowledge-gateway/run.sh                   # starts it on http://localhost:5280
+```
+
+The script runs the tests (skip with `--skip-tests`), publishes a Release build, copies the policy and the demo repository next to it, and writes two files:
+
+- `run.sh`: the launcher. It reads `gateway.env`, defaults to dev mode on port 5280, and starts the gateway.
+- `gateway.env`: your settings (repository path, Azure DevOps organisation and project, `Auth__Dev__UseAzureCli`). Created once and kept on every re-publish.
+
+Options: `--output <dir>` to publish elsewhere, `--self-contained` to include the .NET runtime so the target machine needs no SDK. Re-run the script after a `git pull` to update.
+
+To use it from the Claude desktop app like any local MCP server, add under `mcpServers` in `claude_desktop_config.json`: `"knowledge-gateway": { "command": "npx", "args": ["-y", "mcp-remote", "http://localhost:5280/mcp"] }`, with the gateway running.
+
 ## Build and test
 
 ```bash

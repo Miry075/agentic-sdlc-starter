@@ -152,6 +152,7 @@ A .NET 10 ASP.NET Core service, the single door between agents and knowledge. De
 
 - **Entra ID** with group-to-role mapping, or **Dev mode** (fixed user, refuses to start in Production).
 - Health endpoints: `/health/live`, `/health/ready`.
+- `scripts/publish-gateway.sh`: tested Release build in `~/.knowledge-gateway` with a launcher and a settings file, for running it locally without the source.
 - Docker image (non-root, port 8080), policy copied into the image: a policy change is a reviewed pull request and a redeploy.
 
 ## 7. AI-readiness scanner
