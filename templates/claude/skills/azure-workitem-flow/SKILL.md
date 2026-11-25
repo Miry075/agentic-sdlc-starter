@@ -94,6 +94,8 @@ If a use case turns out to be out of scope for this change, say so explicitly ra
 
 ### 4. Propose solution options
 
+Run this step on Opus: do the research and the options in a subagent (Agent tool, `model: "opus"`), then present the result and hold the gate in the main session.
+
 Apply guardrails **Phase B** on option honesty: 2-3 realistic options when they genuinely exist, one clearly-argued option when they do not — never padded with straw alternatives.
 
 For each option, give:
@@ -108,13 +110,15 @@ Close with your own recommendation: the option that best respects every use case
 
 ### 5. Get the implementation go-ahead
 
-Ask the user to confirm you should implement the chosen option before writing any code. Once confirmed, run the implementation on Sonnet, whatever model the main session uses: spawn a subagent via the Agent tool with `model: "sonnet"` and give it the chosen option, the confirmed AC checklist, the use cases, the file citations and the rules below; it writes the code and tests and runs `dotnet build` and `dotnet test`, then reports the real output. If the Agent tool is unavailable and the session is not on Sonnet, ask the user to run `/model sonnet` first. Only the analysis (step 3) runs on Opus; review (step 6) happens in the main session.
+Ask the user to confirm you should implement the chosen option before writing any code. Once confirmed, run the implementation on Sonnet, whatever model the main session uses: spawn a subagent via the Agent tool with `model: "sonnet"` and give it the chosen option, the confirmed AC checklist, the use cases, the file citations and the rules below; it writes the code and tests and runs `dotnet build` and `dotnet test`, then reports the real output. If the Agent tool is unavailable and the session is not on Sonnet, ask the user to run `/model sonnet` first. Models: Opus for the analysis (step 2) and the options (step 4); Sonnet for implementation (step 5), review and commit (steps 6 and 7) and the pull request and hours (step 8).
 
 Apply guardrails **Phase C** while implementing: hold scope to the chosen option, follow local repo conventions, and park anything else you notice as follow-up. Apply `dotnet-design-principles` to the code you write — SOLID, DDD, layering, in the code itself, regardless of what surrounds it — without manufacturing structural changes the ticket didn't ask for; see that skill's minimal-footprint section.
 
 Write the tests as part of this step, not after it, per `dotnet-testing-standards`: tests for the additional AC and the use cases they map to, and a test pinning any existing AC this change puts at risk. For a bug fix, the failing test comes first.
 
 ### 6. Review the implementation
+
+Run the build, tests, checklists and sweep on Sonnet: do them in a subagent (Agent tool, `model: "sonnet"`) and keep the commit gate in the main session.
 
 Apply guardrails **Phase D** first — build and test for real, walk both AC checklists, run the health-sector sweep. Also walk the use-case checklist from step 3, item by item, the same way: met, not met, or not verifiable. Do not present an assessment before that, and if the environment cannot build or test, label the assessment unverified and say why.
 
