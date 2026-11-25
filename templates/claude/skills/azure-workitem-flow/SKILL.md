@@ -108,7 +108,7 @@ Close with your own recommendation: the option that best respects every use case
 
 ### 5. Get the implementation go-ahead
 
-Ask the user to confirm you should implement the chosen option before writing any code. Once confirmed, implement it directly in the current session — implementation is meant to run on Sonnet, and that's already the model in play, so no subagent handoff is needed.
+Ask the user to confirm you should implement the chosen option before writing any code. Once confirmed, run the implementation on Sonnet, whatever model the main session uses: spawn a subagent via the Agent tool with `model: "sonnet"` and give it the chosen option, the confirmed AC checklist, the use cases, the file citations and the rules below; it writes the code and tests and runs `dotnet build` and `dotnet test`, then reports the real output. If the Agent tool is unavailable and the session is not on Sonnet, ask the user to run `/model sonnet` first. Only the analysis (step 3) runs on Opus; review (step 6) happens in the main session.
 
 Apply guardrails **Phase C** while implementing: hold scope to the chosen option, follow local repo conventions, and park anything else you notice as follow-up. Apply `dotnet-design-principles` to the code you write — SOLID, DDD, layering, in the code itself, regardless of what surrounds it — without manufacturing structural changes the ticket didn't ask for; see that skill's minimal-footprint section.
 
