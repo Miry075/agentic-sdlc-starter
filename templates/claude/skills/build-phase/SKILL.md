@@ -34,14 +34,15 @@ This flow follows `azure-workitem-flow` (also installed) step by step. If a comp
 
 1. Be on `feature/<id>-...`. Read `AGENTS.md`, the spec and its `## Design` section. If there is no chosen option, stop and run `/design-phase <id>` first.
 2. **Gate:** ask the user to confirm you should implement the chosen option now. Write no code before the answer.
-3. Implement in this session:
+3. **Model: Sonnet.** Implementation and tests run on Sonnet, whatever model the main session uses (the analysis phase is the only one that runs on Opus). Hand the work to a subagent (Agent tool, `model: "sonnet"`) with: the work item id and branch, the chosen option from `## Design`, the confirmed AC checklist (existing and additional), the use cases, the `file:line` citations, the glossary terms and the rules below. The subagent writes the code and the tests and runs `dotnet build --nologo` and `dotnet test --nologo`, then reports files changed, tests added, real build and test output, and anything it parked as follow-up. If the Agent tool is unavailable and the session is not already on Sonnet, ask the user to run `/model sonnet` before continuing; if they decline, implement in the session and say so in the report. Review stays in the main session (`/test-phase`).
+4. Rules the implementation follows:
    - **Hold scope:** only the chosen option; no renames, reformatting, package bumps or drive-by refactors. Park anything else you notice as follow-up.
    - **Local convention first:** before introducing a pattern, find a nearby example (DI registration, async and `CancellationToken`, logging, errors, nullable context, validation, the test framework in use).
    - **Design principles** in the code you write, whatever surrounds it, with minimal footprint: no new architecture the change does not need. Name nearby violations as follow-up rather than copying or fixing them.
    - **Glossary terms** exactly in class, method and variable names.
-4. Write the tests now, not after (`dotnet-testing-standards`): one or more per additional AC and the use cases it maps to, a test pinning each existing AC the change puts at risk, and for a bug fix the failing test first. No mocks of the domain; fakes at the ports the application owns; real infrastructure for infrastructure tests.
-5. If the project structure changed (new project, moved folder, new build step), update `AGENTS.md` too.
+5. Write the tests now, not after (`dotnet-testing-standards`): one or more per additional AC and the use cases it maps to, a test pinning each existing AC the change puts at risk, and for a bug fix the failing test first. No mocks of the domain; fakes at the ports the application owns; real infrastructure for infrastructure tests.
+6. If the project structure changed (new project, moved folder, new build step), update `AGENTS.md` too.
 
 ## Done when
 
-The chosen option and its tests are written and nothing is committed. Next: `/test-phase <id>` to verify, review and commit.
+The chosen option and its tests are written (by the Sonnet subagent), the build and tests were actually run, and nothing is committed. Next: `/test-phase <id>` to verify, review and commit.

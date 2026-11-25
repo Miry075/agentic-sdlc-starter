@@ -53,7 +53,7 @@ Copy into each product repository (`templates/repo/`) or wiki (`templates/wiki/`
 | `skills/sdlc` | `/sdlc <id or work item URL>`: resumes from the repository and runs the next phase of the work item. |
 | `skills/requirements-phase` | Fetch the work item, create `feature/<id>-<title>`, split existing from additional AC, Opus analysis of what and why (existing AC confirmed first), use-case sweep, spec committed. |
 | `skills/design-phase` | 2 to 3 real options assessed on use cases, existing AC, design fit and testability; the user chooses; `## Design` in the spec and a Proposed ADR for structural decisions. |
-| `skills/build-phase` | After an explicit go-ahead: the chosen option only, local conventions, design principles, tests written in the same step. No commit yet. |
+| `skills/build-phase` | After an explicit go-ahead: the chosen option only, local conventions, design principles, tests written in the same step. Runs on a Sonnet subagent (only the analysis phase uses Opus). No commit yet. |
 | `skills/test-phase` | Build and test for real, walk existing AC first, then additional AC and use cases, health-sector sweep, honest review, `## Verification` in the spec, then commit named files only after approval. |
 | `skills/deliver-phase` | Ask who opens the PR; push and open it only with approval; propose Completed (Hours) as a human-equivalent estimate and the Resolved transition, never Closed; handle review comments with `resolve-review-feedback`. |
 | `skills/release-phase` | Release notes, migration/configuration/feature-flag checklist, rollback plan and blockers in `docs/releases/<version>.md`. Never deploys or tags. |
