@@ -30,6 +30,10 @@ This flow follows `azure-workitem-flow` (also installed) step by step. If a comp
 - **Secrets and personal data:** never read, print or copy secrets, `.env` files, credentials, or patient or personal data.
 
 
+## Model: Sonnet
+
+This phase runs on Sonnet. If the session is not on Sonnet, gather the commits, work items and verification status and draft `docs/releases/<version>.md` in a subagent (Agent tool, `model: "sonnet"`). The gate, the commit and the pull request stay in the main session.
+
 ## Steps
 
 1. Find what is in the release: commits on the base branch since the last tag (`git describe --tags --abbrev=0`, then `git log --oneline <tag>..HEAD`) and the `AB#<id>` work items in them.

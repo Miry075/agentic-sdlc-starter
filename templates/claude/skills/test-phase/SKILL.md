@@ -30,6 +30,10 @@ This flow follows `azure-workitem-flow` (also installed) step by step. If a comp
 - **Secrets and personal data:** never read, print or copy secrets, `.env` files, credentials, or patient or personal data.
 
 
+## Model: Sonnet
+
+Verification, review and commit run on Sonnet. Do steps 6.1 to 6.4 in a subagent (Agent tool, `model: "sonnet"`), whatever model the main session uses: it runs the build and tests for real, walks the existing AC, additional AC and use-case checklists, runs the health-sector sweep and returns the report with the real command output. The main session writes the `## Verification` section, holds the commit gate and commits. If the Agent tool is unavailable and the session is not on Sonnet, ask the user to run `/model sonnet` first.
+
 ## Step 6: review the implementation (guardrails phase D)
 
 1. Run it, do not claim it: the build and test commands from `AGENTS.md` (for .NET: `dotnet build --nologo`, `dotnet test --nologo`). Report the real outcome. If the environment cannot build or test, label the whole assessment **unverified, not built** and say why.

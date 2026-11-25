@@ -30,6 +30,10 @@ This flow follows `azure-workitem-flow` (also installed) step by step. If a comp
 - **Secrets and personal data:** never read, print or copy secrets, `.env` files, credentials, or patient or personal data.
 
 
+## Model: Opus
+
+Design is the second phase that runs on Opus (with the requirements analysis). Do steps 1 to 4 in a subagent (Agent tool, `model: "opus"`), whatever model the main session uses. Give it the work item id and branch, the spec path, and these rules; it reads the spec, `AGENTS.md`, the ADRs and the code, and returns the options, the use-case fit, design fit, testability and its recommendation, with `file:line` citations. The main session presents that result without softening it, then holds the gate and records the choice. If the Agent tool is unavailable and the session is not on Opus, ask the user to run `/model opus` first.
+
 ## Step 4: propose solution options (guardrails phase B, design principles, testing standards)
 
 1. Be on `feature/<id>-...` and read `docs/specs/<id>.md`: both AC checklists and the use cases. If the spec is missing or has blocking open questions, stop.

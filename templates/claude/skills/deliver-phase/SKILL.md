@@ -30,6 +30,10 @@ This flow follows `azure-workitem-flow` (also installed) step by step. If a comp
 - **Secrets and personal data:** never read, print or copy secrets, `.env` files, credentials, or patient or personal data.
 
 
+## Model: Sonnet
+
+This phase runs on Sonnet. If the session is not on Sonnet, draft the pull request description and the completed-hours breakdown in a subagent (Agent tool, `model: "sonnet"`) from the spec's verification table, risks and follow-ups. Asking who opens the pull request, pushing, and every tracker write stay in the main session with the user's approval.
+
 ## Step 8a: the pull request
 
 1. **Ask who opens the pull request**, every time, with no standing assumption: you, or the user.
